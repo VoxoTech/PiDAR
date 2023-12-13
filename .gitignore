@@ -1,0 +1,10 @@
+# temps
+.vscode
+__pycache__
+
+# work in progress
+mechanical_design
+circuitpython
+
+# data directory
+csv
