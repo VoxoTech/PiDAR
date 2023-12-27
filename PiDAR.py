@@ -83,6 +83,9 @@ class LD06_data:
 
         return LD06_data(FSA, LSA, CS, speed, timestamp, luminance_list, angle_list, distance_list, offset)
     
+
+    # TODO: try using bytearray() instead of string
+    # https://stackoverflow.com/questions/7555689/python-3-building-an-array-of-bytes
     @staticmethod
     def compute_bytes(data_bytes, offset=0):
         dlength = 12 
@@ -91,7 +94,10 @@ class LD06_data:
         speed = int.from_bytes(data_bytes[2:4], 'big') / 100
         
         # start angle in degrees
-        FSA = float(int.from_bytes(data_bytes[4:6], 'big')) / 100       
+        FSA = float(int.from_bytes(data_bytes[4:6], 'big')) / 100
+
+        ## INFO: if it was a actual float, convert 4 bytes to float
+        # FSA = struct.unpack('f', byte_data[2:6])[0]
         
         # end angle in degrees
         LSA = float(int.from_bytes(data_bytes[-6:-4], 'big')) / 100  
@@ -194,6 +200,7 @@ with LD06_serial() as serial_connection:
                 
                 # crop last two byte (0x54, 0x2c) from byte_string
                 lidar_data = LD06_data.compute(byte_string[0:-5], angle_offset)
+                # lidar_data = LD06_data.compute_bytes(byte_array[0:-5], angle_offset)
 
                 x_list.extend(lidar_data.x)
                 y_list.extend(lidar_data.y)

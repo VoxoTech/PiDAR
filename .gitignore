@@ -2,9 +2,13 @@
 .vscode
 __pycache__
 
+# private
+circuitpython/settings.toml
+todo.md
+
 # work in progress
 mechanical_design
-circuitpython
+circuitpython/lib
 
 # data directory
 csv
