@@ -1,18 +1,27 @@
 '''
 LD06 LiDAR data processing and visualisation
 '''
-
+import platform
+import serial
 import math
 import numpy as np
 import os
 import threading
 import keyboard
 
-from lib.LD06_serial import LD06_serial
-from lib.utils_csv import save_thread
-
+from lib.file_utils import save_thread, list_files, merge_csv_dir
 from lib.matplotlib_utils import plot_2D  # plot_3D, rotate_3D
 from lib.open3d_utils import plot_3D, rotate_3D
+
+
+def LD06_serial():
+    '''
+    specification of LD06 dataframe:
+    https://storage.googleapis.com/mauser-public-images/prod_description_document/2021/315/8fcea7f5d479f4f4b71316d80b77ff45_096-6212_a.pdf
+    '''
+    port = {'Windows': 'COM10', 
+            'Linux': '/dev/ttyUSB0'}[platform.system()]  # 'Raspberry': '/dev/ttyACM0'
+    return serial.Serial(port=port, baudrate=230400, timeout=5.0, bytesize=8, parity='N', stopbits=1)
 
 
 class LD06_data:
@@ -137,7 +146,7 @@ class LD06_data:
 angle_offset = math.pi / 2  # 90°
 visualize = True 
 save_csv = False
-csv_dir = "csv"
+csv_dir = "cpython/csv"
 update_interval = 40
 
 
@@ -219,39 +228,7 @@ with LD06_serial() as serial_connection:
 
 
 
-# ------------------
 # 3D CONVERSION AND VISUALISATION
-
-def listfiles(dir, extension=None):
-    filepaths = list()
-    for root, dirs, files in os.walk(dir, topdown=False):
-        for file in files:
-            if extension is None or os.path.splitext(file)[1] == extension:
-                filepath = os.path.join(root, file)
-                filepaths.append(filepath)
-    return filepaths
-
-
-if __name__ == "__main__" and save_csv:
-    # 3D conversion
-    rotation_axis = np.array([0, 0, 1])  # 3D rotation about up-axis: Z
-    angular_resolution = 1  # in degrees
-
-    # init result object with (X,y,Z, intensity)
-    pointcloud = np.zeros((1, 4))
-    angle = 0
-
-    filepaths = listfiles(csv_dir, extension=".csv")
-
-    for filepath in filepaths:
-        points2d = np.loadtxt(filepath, delimiter=";")
-
-        # insert 3D Y=0 after column 0 so 2D Y becomes 3D Z (Z-up: image is now vertical)
-        points3d = np.insert(points2d, 1, values=0, axis=1)
-
-        points3d = rotate_3D(points3d, rotation_axis, angle)
-        pointcloud = np.append(pointcloud, points3d, axis=0)
-
-        angle += angular_resolution
-
+if save_csv:
+    pointcloud = merge_csv_dir(csv_dir, angle_step=1)
     plot_3D(pointcloud)

@@ -13,10 +13,10 @@ rotation
 https://www.kite.com/python/answers/how-to-rotate-a-3d-vector-about-an-axis-in-python
 https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.html
 """
-import numpy as np
-from scipy.spatial.transform import Rotation
 
+import numpy as np
 import open3d as o3d
+from scipy.spatial.transform import Rotation
 
 
 def rotate_3D(points3d, rotation_axis, rotation_degrees):
@@ -49,4 +49,3 @@ def plot_3D(pointcloud):
         pcd.colors = o3d.utility.Vector3dVector(colors)
 
     o3d.visualization.draw_geometries([pcd])
-
