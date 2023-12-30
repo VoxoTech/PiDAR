@@ -40,3 +40,9 @@ len is the length of the packet, and the i value range is [0, len].
 - [mechanical Datasheet](https://www.inno-maker.com/wp-content/uploads/2020/11/LDROBOT_LD06_Datasheet.pdf)
 - [Protocol Description](https://storage.googleapis.com/mauser-public-images/prod_description_document/2021/315/8fcea7f5d479f4f4b71316d80b77ff45_096-6212_a.pdf)
 - another potentially interesting implementation: [pyLIDAR](https://github.com/Paradoxdruid/pyLIDAR)
+
+## Libcamera
+[parameters](https://www.raspberrypi.com/documentation/computers/camera_software.html)
+
+> rpicam-still --rotation 180 --immediate --nopreview -e png --quality 100 -o test.png --width 4056 --height 3040 --gain 1 --denoise cdn_hq --awb incandescent --shutter 500000 --sharpness 0.5 --saturation 0.9
+
