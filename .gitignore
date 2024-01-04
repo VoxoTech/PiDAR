@@ -9,6 +9,7 @@ todo.md
 # work in progress
 mechanical_design
 circuitpython/lib
+_other
 
 # data directory
-csv
+cpython/data

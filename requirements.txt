@@ -4,3 +4,6 @@ pyserial>=3.5
 scipy>=1.8.0
 keyboard>=0.13.5
 open3d>=0.13.0
+
+# adafruit_board_toolkit
+# aioconsole
