@@ -1,29 +1,25 @@
-'''
-serial on CPython:
-pip install pyserial
-'''
-
 import serial
 import time
 import json
 import os
-
+import threading
 
 def read_data(ser):
     ''' 
     Read a line, decode the bytes as UTF-8 string, 
     strip out newline and carriage return characters
     '''
-    data = ser.readline().decode().strip()
-    #text = ser.readline().decode("utf-8").rstrip('\r\n')
-    return data
-
+    while True:
+        data = ser.readline().decode().strip()
+        if data:
+            # Parse JSON and save it to a file
+            json_data = json.loads(data)
+            save_json(json_data, dir=data_dir)
 
 def send_data(raw=None, text=None):
     if raw is None and text is not None:
         raw = text.encode("utf-8")
     ser.write(raw)
-
 
 def save_json(json_data, dir="."):
     path = os.path.join(dir, f"{time.time()}.json")
@@ -39,10 +35,10 @@ ser = serial.Serial(port=data_port, baudrate=baudrate, timeout=60)
 # Send the 'start' command as bytes
 send_data(raw=b"start\n")
 
+# Start a new thread that will continuously read data
+# TODO: might need to add synchronization mechanisms like locks or queues
+threading.Thread(target=read_data, args=(ser,), daemon=True).start()
+
 while True:
-    if ser.in_waiting > 0:
-        data = read_data(ser)
-        if data:
-            # Parse JSON and save it to a file
-            json_data = json.loads(data)
-            save_json(json_data, dir=data_dir)
+    # The main loop can do other things here without being blocked by the data reading
+    time.sleep(1)
