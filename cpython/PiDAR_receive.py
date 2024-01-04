@@ -2,19 +2,13 @@ import serial
 import time
 import json
 import os
-import threading
+
+from utils.plot_2D import plot_2D 
+
 
 def read_data(ser):
-    ''' 
-    Read a line, decode the bytes as UTF-8 string, 
-    strip out newline and carriage return characters
-    '''
-    while True:
-        data = ser.readline().decode().strip()
-        if data:
-            # Parse JSON and save it to a file
-            json_data = json.loads(data)
-            save_json(json_data, dir=data_dir)
+    data = ser.readline().decode().strip()
+    return data
 
 def send_data(raw=None, text=None):
     if raw is None and text is not None:
@@ -26,6 +20,7 @@ def save_json(json_data, dir="."):
     with open(path, "w") as f:
         json.dump(json_data, f)
 
+
 data_port = "COM13"
 data_dir = "cpython/data"
 baudrate = 115200
@@ -35,10 +30,21 @@ ser = serial.Serial(port=data_port, baudrate=baudrate, timeout=60)
 # Send the 'start' command as bytes
 send_data(raw=b"start\n")
 
-# Start a new thread that will continuously read data
-# TODO: might need to add synchronization mechanisms like locks or queues
-threading.Thread(target=read_data, args=(ser,), daemon=True).start()
+# Initialize the matplotlib visualization
+visualisation = plot_2D()
 
 while True:
-    # The main loop can do other things here without being blocked by the data reading
-    time.sleep(1)
+    if ser.in_waiting > 0:
+        data = read_data(ser)
+        if data:
+            # Parse JSON and save it to a file
+            json_data = json.loads(data)
+            save_json(json_data, dir=data_dir)
+            
+            # Parse the data into lists
+            x_list = json_data["x"]
+            y_list = json_data["y"]
+            luminance_list = json_data["luminance"]
+
+            # Update the visualization
+            visualisation.update_data(x_list, y_list, luminance_list)
