@@ -3,7 +3,7 @@ import time
 import json
 import os
 
-from utils.plot_2D import plot_2D 
+from lib.matplotlib_utils import plot_2D 
 
 
 def read_data(ser):

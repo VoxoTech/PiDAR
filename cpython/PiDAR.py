@@ -146,7 +146,7 @@ class LD06_data:
 angle_offset = math.pi / 2  # 90°
 visualize = True 
 save_csv = False
-csv_dir = "cpython/csv"
+csv_dir = "cpython/data"
 update_interval = 40
 
 
@@ -208,7 +208,6 @@ with LD06_serial() as serial_connection:
                     continue
                 
                 # crop last two byte (0x54, 0x2c) from byte_string
-                print(byte_string[0:-5])
                 lidar_data = LD06_data.compute(byte_string[0:-5], angle_offset)
                 # lidar_data = LD06_data.compute_bytes(byte_array[0:-5], angle_offset)
 
