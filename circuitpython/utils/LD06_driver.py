@@ -2,8 +2,6 @@ import pwmio
 import busio
 import board
 import math
-import binascii
-import time
 
 
 class LD06:
@@ -26,9 +24,9 @@ class LD06:
         return pwm
     
     
-#     def set_pwm_dc(self, dc):
-#         self.pwm_dc = dc
-#         self.LD06_pwm.duty_cycle = int(dc * 65534)
+    # def set_pwm_dc(self, dc):
+    #     self.pwm_dc = dc
+    #     self.LD06_pwm.duty_cycle = int(dc * 65534)
 
 
     def LD06_serial(self, Rx_pin):
@@ -118,13 +116,13 @@ class LD06:
                     #print(f'Lists | X: {x_list}, Y: {y_list}, Luminance: {luminance_list}')
                     return x_list, y_list, luminance_list
                 
-#                     # prepare for next iteration
-#                     angle_list.clear()
-#                     distance_list.clear()
-#                     luminance_list.clear()
-#                     x_list.clear()
-#                     y_list.clear()
-#                     i = 0
+                    # # prepare for next iteration
+                    # angle_list.clear()
+                    # distance_list.clear()
+                    # luminance_list.clear()
+                    # x_list.clear()
+                    # y_list.clear()
+                    # i = 0
                 i += 1
 
 

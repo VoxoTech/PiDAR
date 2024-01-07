@@ -1,4 +1,12 @@
 '''
+https://learn.adafruit.com/adafruit-bno055-absolute-orientation-sensor/overview
+
+# cpython library for reference
+https://github.com/adafruit/Adafruit_Python_BNO055
+https://github.com/adafruit/Adafruit_Python_BNO055/blob/master/Adafruit_BNO055/BNO055.py
+https://github.com/adafruit/Adafruit_Python_BNO055/blob/master/examples/simpletest.py
+
+
 Please ensure that the data received from the Pico is in the correct format 
 for conversion from string to NumPy array. The np.fromstring function expects 
 a string representation of an array like "1.0,2.0,3.0" (without brackets) 

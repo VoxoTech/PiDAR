@@ -1,6 +1,7 @@
 # temps
 .vscode
 __pycache__
+cpython/_temp
 
 # private
 circuitpython/settings.toml

@@ -1,5 +1,7 @@
+import os
 import time
 import csv
+import numpy as np
 
 from lib.open3d_utils import rotate_3D
 

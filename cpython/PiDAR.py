@@ -1,6 +1,3 @@
-'''
-LD06 LiDAR data processing and visualisation
-'''
 import platform
 import serial
 import math
@@ -19,9 +16,9 @@ def LD06_serial():
     specification of LD06 dataframe:
     https://storage.googleapis.com/mauser-public-images/prod_description_document/2021/315/8fcea7f5d479f4f4b71316d80b77ff45_096-6212_a.pdf
     '''
-    port = {'Windows': 'COM10', 
-            'Linux': '/dev/ttyUSB0'}[platform.system()]  # 'Raspberry': '/dev/ttyACM0'
-    return serial.Serial(port=port, baudrate=230400, timeout=5.0, bytesize=8, parity='N', stopbits=1)
+    # port = {'Windows': 'COM10', 
+    #         'Linux': '/dev/ttyUSB0'}[platform.system()]  # 'Raspberry': '/dev/ttyACM0'
+    return serial.Serial(port='COM10', baudrate=230400, timeout=5.0, bytesize=8, parity='N', stopbits=1)
 
 
 class LD06_data:
@@ -145,7 +142,7 @@ class LD06_data:
 # PARAMETERS
 angle_offset = math.pi / 2  # 90°
 visualize = True 
-save_csv = False
+save_csv = True
 csv_dir = "cpython/data"
 update_interval = 40
 
