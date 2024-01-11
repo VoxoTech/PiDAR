@@ -6,9 +6,9 @@ import numpy as np
 from lib.open3d_utils import rotate_3D
 
 
-def save_thread(save_dir, x_list, y_list, color):
+def save_thread(save_dir, x_list, y_list, color, delimiter):
     filename = f"{save_dir}/{time.time()}.csv"
-    delimiter = ";"
+    
     data = list(zip(x_list, y_list, color))
 
     with open(filename, 'w', newline='') as f:
