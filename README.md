@@ -1,5 +1,7 @@
-# PiDAR
+# PiDAR -- WORK IN PROGRESS!
 sophisticated 360° 3D Panorama Scanner: LDRobot LD06 LiDAR @ Raspberry Pi Pico | HQ Camera + M12 Fisheye Lens + Hugin @ Raspberry Pi 4 | Nema17 @ A4988
+
+
 
 ## core features:
 - optimized LD06 serial/UART driver (Python / CircuitPython)

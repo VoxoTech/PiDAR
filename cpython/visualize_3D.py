@@ -1,6 +1,6 @@
 from lib.file_utils import merge_csv_dir
-from lib.open3d_utils import plot_3D  # rotate_3D
-# from lib.matplotlib_utils import plot_3D, rotate_3D
+from lib.open3d_utils import plot_3D
+# from lib.matplotlib_utils import plot_3D
 
 
 csv_dir = "cpython/data"

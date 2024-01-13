@@ -1,6 +1,4 @@
 import numpy as np
-from scipy.spatial.transform import Rotation
-
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -16,37 +14,46 @@ class plot_2D:
         self.ax.set_facecolor('darkblue')
         self.ax.xaxis.grid(True, color='darkgray', linestyle='dashed')
         self.ax.yaxis.grid(True, color='darkgray', linestyle='dashed')
-        self.ani = self.init_visualisation()
+        self.ani = self.__initialize_animation__()
         self.pause = pause
+
+    def __initialize_animation__(self):
+        return animation.FuncAnimation(self.fig, self.animate, init_func=self.init, frames=1, interval=1, blit=True)
+
+    def __gray2rgb__(self, luminances):
+        return np.column_stack((luminances, luminances, luminances))
     
-    def init_visualisation(self):
-        def init():
-            return self.ax,
+    def init(self):
+        return self.ax,
 
-        # convert grayscale value to RGB-array
-        def color_array(luminance):
-            a = np.array(luminance)
-            return np.column_stack((a, a, a))
+    def animate(self, i):
+        line = getattr(self, 'line', None)
+        if line is not None:
+            line.remove()
 
-        def animate(i):
-            if hasattr(self, 'line'):
-                self.line.remove()
+        self.line = self.ax.scatter(self.x_list, self.y_list, c=self.color_list/255, s=1)
+        return self.line,
 
-            rgb = color_array(self.luminance_list)
-            self.line = self.ax.scatter(self.x_list, self.y_list, c=rgb/255, s=1)
-            return self.line,
+    # def update_from_lists(self, x_list, y_list, luminance_list):
+    #     self.x_list = np.asarray(x_list)
+    #     self.y_list = np.asarray(y_list)
+    #     self.color_list = self.__gray2rgb__(np.asarray(luminance_list))
+    #     plt.pause(self.pause)
 
-        self.ani = animation.FuncAnimation(self.fig, animate, init_func=init, frames=1, interval=1, blit=True)
-        return self.ani
-    
-    def update_data(self, x_list, y_list, luminance_list):
-        self.x_list = x_list
-        self.y_list = y_list
-        self.luminance_list = luminance_list
-        
-        # pause to update plot
+    def update_from_coordinates(self, points_2d):  # points_2d: np.array([[luminance, x, y,], ...])
+        self.x_list = points_2d[:, 0]
+        self.y_list = points_2d[:, 1]
+        self.color_list = self.__gray2rgb__(points_2d[:, 2])
         plt.pause(self.pause)
 
+    def close(self):
+        plt.close()
+
+
+###################################################
+## OBSOLETE!
+
+# from scipy.spatial.transform import Rotation
 
 # def plot_3D(pointcloud):
 #     xs = pointcloud[:, 0]
