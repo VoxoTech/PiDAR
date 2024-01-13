@@ -14,18 +14,21 @@ def list_files(dir, extension=None):
     return filepaths
 
 
-def merge_csv_dir(path, angle_step=0, up_axis="Z", delimiter=","):
+def merge_data(path, angle_step=0, up_axis="Z", format='npy', delimiter=","):
     if up_axis.upper() == "Z":
         rotation_axis = np.array([0, 0, 1])
 
-    # init result object with (X,y,Z, intensity)
+    # init result object with (X,Y,Z, intensity)
     pointcloud = np.zeros((1, 4))
     angle = 0
 
-    filepaths = list_files(path, extension=".csv")
+    filepaths = list_files(path, extension= "." + format.lower() )
 
     for filepath in filepaths:
-        points2d = np.loadtxt(filepath, delimiter=delimiter)
+        if format == 'npy':
+            points2d = np.load(filepath)
+        elif format == 'csv':
+            points2d = np.loadtxt(filepath, delimiter=delimiter)
 
         # insert 3D Y=0 after column 0 so 2D-Y becomes 3D-Z (Z-up: image is now vertical)
         points3d = np.insert(points2d, 1, values=0, axis=1)

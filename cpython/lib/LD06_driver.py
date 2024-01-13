@@ -9,30 +9,30 @@ import math
 import numpy as np
 import threading
 import time
-import csv
 import serial
 import keyboard
+# import csv
 
 
 class LD06:
-    def __init__(self, port, offset=0, data_dir="data", save_csv=False, delimiter=",", visualization=None, viz_interval=40):
+    def __init__(self, port, offset=0, data_dir="data", save=None, visualization=None, viz_interval=40, dtype=np.float32):
         self.port = port
         self.serial_connection = LD06_serial(self.port)
         self.offset = offset
 
         self.data_dir = data_dir
-        self.save_csv = save_csv
-        self.delimiter = delimiter
+        self.save = save
         self.visualization = visualization
         self.viz_interval = viz_interval
 
+        self.dtype = dtype
         self.byte_string = ""
         self.flag_2c = False
         self.viz_counter = 0
 
         self.speeds = list()  
         self.timestamps = list()
-        self.points_2d = np.empty((0,3), dtype=np.float32)  # np.array([[luminance, x, y], ...])
+        self.points_2d = np.empty((0,3), dtype=self.dtype)
     
 
     def close(self):
@@ -50,17 +50,20 @@ class LD06:
 
             try:
                 if self.viz_counter == self.viz_interval:
-                    if self.save_csv:
-                        t = threading.Thread(target=save_from_coordinates, args=(self.data_dir, self.points_2d, self.delimiter))
+                    if self.save == 'npy':
+                        t = threading.Thread(target=save_npy, args=(self.data_dir, self.points_2d))
                         t.start()
+                    # if self.save == 'csv':
+                    #     t = threading.Thread(target=save_csv, args=(self.data_dir, self.points_2d))
+                    #     t.start()
                     
                     if self.visualization is not None:
-                        self.visualization.update_from_coordinates(self.points_2d)
+                        self.visualization.update_coordinates(self.points_2d)
 
                     # reset lists
                     self.speeds.clear()
                     self.timestamps.clear()
-                    self.points_2d = np.empty((0,3), dtype=np.float32)
+                    self.points_2d = np.empty((0,3), dtype=self.dtype)
                     self.viz_counter = 0
             
                 # iterate through serial stream until start or end of package is found
@@ -90,7 +93,7 @@ class LD06:
 
                         self.speeds.append(speed)
                         self.timestamps.append(timestamp)
-                        self.points_2d = np.vstack((self.points_2d, np.column_stack((x_batch, y_batch, luminance_batch))))
+                        self.points_2d = np.vstack((self.points_2d, np.column_stack((x_batch, y_batch, luminance_batch)))).astype(self.dtype)
                         self.byte_string = ""
                         break
 
@@ -144,26 +147,27 @@ def LD06_serial(port):
     # port = {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()]  
     return serial.Serial(port=port, baudrate=230400, timeout=1.0, bytesize=8, parity='N', stopbits=1)
 
-
 def polar2cartesian(angles, distances, offset):
-    # angles = list(np.array(angles) + offset)
-    # x_list = distances * -np.cos(angles)
-    # y_list = distances * np.sin(angles)
+    # numpy implementation
+    angles = list(np.array(angles) + offset)
+    x_list = distances * -np.cos(angles)
+    y_list = distances * np.sin(angles)
 
-    angles = [a + offset for a in angles]
-    x_list = [d * -math.cos(a) for a, d in zip(angles, distances)]
-    y_list = [d * math.sin(a) for a, d in zip(angles, distances)]
-
+    ## python implementation
+    # angles = [a + offset for a in angles]
+    # x_list = [d * -math.cos(a) for a, d in zip(angles, distances)]
+    # y_list = [d * math.sin(a) for a, d in zip(angles, distances)]
     return x_list, y_list
 
+# def save_csv(save_dir, points_2d, delimiter=','):
+#     filename = f"{save_dir}/{time.time()}.csv"
+#     with open(filename, 'w', newline='') as f:
+#         writer = csv.writer(f, delimiter=delimiter)
+#         writer.writerows(points_2d)
 
-def save_from_coordinates(save_dir, points_2d, delimiter):
-    filename = f"{save_dir}/{time.time()}.csv"
-    
-    with open(filename, 'w', newline='') as f:
-        writer = csv.writer(f, delimiter=delimiter)
-        writer.writerows(points_2d)
-
+def save_npy(save_dir, points_2d):
+    filename = f"{save_dir}/{time.time()}.npy"
+    np.save(filename, points_2d)
 
 
 if __name__ == "__main__":
@@ -174,9 +178,8 @@ if __name__ == "__main__":
     # CONSTANTS
     PORT = "COM10"
     ANGLE_OFFSET = math.pi / 2  # 90°
-    SAVE_CSV = True
+    SAVE = 'npy'  # was 'csv' before
     DATA_DIR = "cpython/data"
-    DELIMITER = ","
     VIZ_INTERVAL = 40  # visualize after every nth batch
 
     # ensure output directory
@@ -186,10 +189,10 @@ if __name__ == "__main__":
     lidar = LD06(port=PORT,
                 visualization=plot_2D(),
                 offset=ANGLE_OFFSET, 
-                save_csv=SAVE_CSV,
+                save=SAVE,
                 data_dir=DATA_DIR,
-                delimiter=DELIMITER,
-                viz_interval=VIZ_INTERVAL)
+                viz_interval=VIZ_INTERVAL,
+                dtype=np.float32)
 
     try:
         if lidar.serial_connection.is_open:
