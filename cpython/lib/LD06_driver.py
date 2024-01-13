@@ -176,9 +176,10 @@ if __name__ == "__main__":
     from matplotlib_utils import plot_2D
 
     # CONSTANTS
-    PORT = "COM10"
+    PORT = "COM10"  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
     ANGLE_OFFSET = math.pi / 2  # 90°
     SAVE = 'npy'  # was 'csv' before
+    DTYPE = np.float32
     DATA_DIR = "cpython/data"
     VIZ_INTERVAL = 40  # visualize after every nth batch
 
@@ -190,9 +191,9 @@ if __name__ == "__main__":
                 visualization=plot_2D(),
                 offset=ANGLE_OFFSET, 
                 save=SAVE,
+                dtype=DTYPE,
                 data_dir=DATA_DIR,
-                viz_interval=VIZ_INTERVAL,
-                dtype=np.float32)
+                viz_interval=VIZ_INTERVAL)
 
     try:
         if lidar.serial_connection.is_open:

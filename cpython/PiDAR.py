@@ -4,11 +4,11 @@ from lib.matplotlib_utils import plot_2D
 from lib.LD06_driver import LD06
 
 # CONSTANTS
-PORT = "COM10" # port = {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()]  
+PORT = "COM10"  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
 ANGLE_OFFSET = math.pi / 2  # 90°
-SAVE_CSV = True
+SAVE = 'npy'  # was 'csv' before
+DTYPE = np.float32
 DATA_DIR = "cpython/data"
-DELIMITER = ","
 VIZ_INTERVAL = 40  # visualize after every nth batch
 
 # ensure output directory
@@ -18,9 +18,9 @@ if not os.path.exists(DATA_DIR):
 lidar = LD06(port=PORT,
             visualization=plot_2D(),
             offset=ANGLE_OFFSET, 
-            save_csv=SAVE_CSV,
+            save=SAVE,
+            dtype=DTYPE,
             data_dir=DATA_DIR,
-            delimiter=DELIMITER,
             viz_interval=VIZ_INTERVAL)
 
 try:
