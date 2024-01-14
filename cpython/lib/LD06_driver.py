@@ -11,7 +11,7 @@ import threading
 import time
 import serial
 import keyboard
-# import csv
+import csv
 
 
 class LD06:
@@ -51,9 +51,9 @@ class LD06:
                     if self.save == 'npy':
                         t = threading.Thread(target=save_npy, args=(self.data_dir, self.points_2d))
                         t.start()
-                    # if self.save == 'csv':
-                    #     t = threading.Thread(target=save_csv, args=(self.data_dir, self.points_2d))
-                    #     t.start()
+                    if self.save == 'csv':
+                        t = threading.Thread(target=save_csv, args=(self.data_dir, self.points_2d))
+                        t.start()
                     
                     if self.visualization is not None:
                         self.visualization.update_coordinates(self.points_2d)
@@ -106,7 +106,7 @@ class LD06:
 
     @staticmethod
     def decode_bytes(byte_array):  
-        dlength = byte_array[46] & 0x1F  # 12
+        dlength = 12  # byte_array[46] & 0x1F
         speed = int.from_bytes(byte_array[0:2][::-1], 'big') / 100            # rotational speed in degrees/second
         FSA = float(int.from_bytes(byte_array[2:4][::-1], 'big')) / 100       # start angle in degrees
         LSA = float(int.from_bytes(byte_array[40:42][::-1], 'big')) / 100     # end angle in degrees
@@ -119,11 +119,9 @@ class LD06:
         distance_batch = list()
         luminance_batch = list()
 
-        counter = 0
-        circle = lambda deg: deg % 360
-
-        for i in range(0, 3 * 12, 3): # 3 bytes per sample
-            angle = circle(angleStep * counter + FSA) * math.pi / 180.0
+        # 3 bytes per sample x 12 samples
+        for counter, i in enumerate(range(0, 3 * dlength, 3)): 
+            angle = ((angleStep * counter + FSA) % 360) * math.pi / 180.0
             angle_batch.append(angle)
 
             distance = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big') / 100
@@ -131,8 +129,6 @@ class LD06:
 
             luminance = byte_array[6 + i]
             luminance_batch.append(luminance)
-
-            counter += 1
 
         return speed, timestamp, angle_batch, distance_batch, luminance_batch
 
@@ -154,11 +150,11 @@ def polar2cartesian(angles, distances, offset):
     # y_list = [d * math.sin(a) for a, d in zip(angles, distances)]
     return x_list, y_list
 
-# def save_csv(save_dir, points_2d, delimiter=','):
-#     filename = f"{save_dir}/{time.time()}.csv"
-#     with open(filename, 'w', newline='') as f:
-#         writer = csv.writer(f, delimiter=delimiter)
-#         writer.writerows(points_2d)
+def save_csv(save_dir, points_2d, delimiter=','):
+    filename = f"{save_dir}/{time.time()}.csv"
+    with open(filename, 'w', newline='') as f:
+        writer = csv.writer(f, delimiter=delimiter)
+        writer.writerows(points_2d)
 
 def save_npy(save_dir, points_2d):
     filename = f"{save_dir}/{time.time()}.npy"
@@ -172,18 +168,19 @@ if __name__ == "__main__":
 
     # CONSTANTS
     PORT = "COM10"  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
-    ANGLE_OFFSET = math.pi / 2  # 90°
-    SAVE = 'npy'  # was 'csv' before
+    ANGLE_OFFSET = math.pi / 2  # = 90°
+    SAVE = 'npy'                # 'npy' or 'csv'
     DTYPE = np.float32
     DATA_DIR = "cpython/data"
-    VIZ_INTERVAL = 40  # visualize after every nth batch
+    VISUALIZATION = plot_2D()   # plot_2D() or None
+    VIZ_INTERVAL = 40           # visualize after every nth batch
 
     # ensure output directory
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
     lidar = LD06(port=PORT,
-                visualization=plot_2D(),
+                visualization=VISUALIZATION,
                 offset=ANGLE_OFFSET, 
                 save=SAVE,
                 dtype=DTYPE,
