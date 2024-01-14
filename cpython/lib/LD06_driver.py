@@ -25,16 +25,15 @@ class LD06:
         self.visualization = visualization
         self.viz_interval = viz_interval
 
-        self.dtype = dtype
-        self.byte_string = ""
+        self.byte_array = bytearray()
         self.flag_2c = False
         self.viz_counter = 0
 
         self.speeds = list()  
         self.timestamps = list()
+        self.dtype = dtype
         self.points_2d = np.empty((0,3), dtype=self.dtype)
     
-
     def close(self):
         print("Closing...")
         if self.visualization is not None:
@@ -43,7 +42,6 @@ class LD06:
         self.serial_connection.close()
         print("Serial connection closed.")
     
-
     def read_continuously(self):
         while self.serial_connection.is_open and keyboard.is_pressed('q') is False:
             self.viz_counter += 1
@@ -66,39 +64,39 @@ class LD06:
                     self.points_2d = np.empty((0,3), dtype=self.dtype)
                     self.viz_counter = 0
             
-                # iterate through serial stream until start or end of package is found
+                # iterate through serial stream until start package is found
                 flag_2c = False
                 while self.serial_connection.is_open:
 
                     data_byte = self.serial_connection.read()
-                    data_int = int.from_bytes(data_byte, 'big')
 
-                    if data_int == 0x54:  # start of package
-                        self.byte_string += data_byte.hex() + " "
+                    if data_byte == bytes([0x54]):
+                        self.byte_array.extend(data_byte)
                         flag_2c = True
                         continue
 
-                    elif data_int == 0x2c and flag_2c: # end of package
-                        self.byte_string += data_byte.hex()
+                    elif data_byte == bytes([0x2c]) and flag_2c:
+                        self.byte_array.extend(data_byte)
 
-                        # if len(self.byte_string[0:-6].replace(' ', '')) != 90:
-                        if len(self.byte_string) != 140:  # 90 byte + spaces + 0x54 + 0x2c
-                            self.byte_string = ""
+                        if len(self.byte_array) != 47:  # 45 byte + 0x54 + 0x2c
+                            self.byte_array = bytearray()
                             flag_2c = False
                             continue
                         
-                        ## crop last two byte (0x54, 0x2c) from byte_string
-                        speed, timestamp, angle_batch, distance_batch, luminance_batch = self.decode_string(self.byte_string[0:-5])
+                        speed, timestamp, angle_batch, distance_batch, luminance_batch = self.decode_bytes(self.byte_array)
+
                         x_batch, y_batch = polar2cartesian(angle_batch, distance_batch, self.offset)
 
                         self.speeds.append(speed)
                         self.timestamps.append(timestamp)
                         self.points_2d = np.vstack((self.points_2d, np.column_stack((x_batch, y_batch, luminance_batch)))).astype(self.dtype)
-                        self.byte_string = ""
+
+                        # reset byte_array
+                        self.byte_array = bytearray()
                         break
 
                     else:
-                        self.byte_string += data_byte.hex() + " "
+                        self.byte_array.extend(data_byte)
 
                     flag_2c = False
 
@@ -106,35 +104,32 @@ class LD06:
                 print("Serial connection closed.")
                 break
 
-    
     @staticmethod
-    def decode_string(string):
-        string = string.replace(' ', '')        
-        
-        dlength = 12  # int(string[2:4], 16) & 0x1F 
-        speed = int(string[2:4] + string[0:2], 16) / 100            # rotational speed in degrees/second
-        FSA = float(int(string[6:8] + string[4:6], 16)) / 100       # start angle in degrees
-        LSA = float(int(string[-8:-6] + string[-10:-8], 16)) / 100  # end angle in degrees
-        timestamp = int(string[-4:-2] + string[-6:-4], 16)          # timestamp in milliseconds
-        CS = int(string[-2:], 16)                                   # CRC Checksum                                
-        
+    def decode_bytes(byte_array):  
+        dlength = byte_array[46] & 0x1F  # 12
+        speed = int.from_bytes(byte_array[0:2][::-1], 'big') / 100            # rotational speed in degrees/second
+        FSA = float(int.from_bytes(byte_array[2:4][::-1], 'big')) / 100       # start angle in degrees
+        LSA = float(int.from_bytes(byte_array[40:42][::-1], 'big')) / 100     # end angle in degrees
+        timestamp = int.from_bytes(byte_array[42:44][::-1], 'big')            # timestamp in milliseconds
+        CS = int.from_bytes(byte_array[44:45][::-1], 'big')                   # CRC Checksum                                
+
         angleStep = (LSA - FSA) / (dlength-1) if LSA - FSA > 0 else (LSA + 360 - FSA) / (dlength-1)
-        
+
         angle_batch = list()
         distance_batch = list()
         luminance_batch = list()
 
         counter = 0
-        circle = lambda deg: deg - 360 if deg >= 360 else deg
-        for i in range(0, 6 * 12, 6):
+        circle = lambda deg: deg % 360
 
+        for i in range(0, 3 * 12, 3): # 3 bytes per sample
             angle = circle(angleStep * counter + FSA) * math.pi / 180.0
             angle_batch.append(angle)
 
-            distance = int(string[8 + i + 2:8 + i + 4] + string[8 + i:8 + i + 2], 16) / 100
+            distance = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big') / 100
             distance_batch.append(distance)
 
-            luminance = int(string[8 + i + 4:8 + i + 6], 16)
+            luminance = byte_array[6 + i]
             luminance_batch.append(luminance)
 
             counter += 1

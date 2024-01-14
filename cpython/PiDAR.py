@@ -1,7 +1,9 @@
+import numpy as np
 import math
 import os
 from lib.matplotlib_utils import plot_2D
 from lib.LD06_driver import LD06
+
 
 # CONSTANTS
 PORT = "COM10"  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
