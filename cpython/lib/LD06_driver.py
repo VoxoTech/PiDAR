@@ -84,11 +84,12 @@ class LD06:
                             continue
                         
                         speed, timestamp, angle_batch, distance_batch, luminance_batch = self.decode_bytes(self.byte_array)
-
                         x_batch, y_batch = polar2cartesian(angle_batch, distance_batch, self.offset)
 
                         self.speeds.append(speed)
                         self.timestamps.append(timestamp)
+
+                        # append to points_2d
                         self.points_2d = np.vstack((self.points_2d, np.column_stack((x_batch, y_batch, luminance_batch)))).astype(self.dtype)
 
                         # reset byte_array
@@ -115,22 +116,16 @@ class LD06:
 
         angleStep = (LSA - FSA) / (dlength-1) if LSA - FSA > 0 else (LSA + 360 - FSA) / (dlength-1)
 
-        angle_batch = list()
-        distance_batch = list()
-        luminance_batch = list()
+        # initialize arrays
+        radians = distances = luminances = np.zeros(dlength, dtype=np.float64)
 
         # 3 bytes per sample x 12 samples
         for counter, i in enumerate(range(0, 3 * dlength, 3)): 
-            angle = ((angleStep * counter + FSA) % 360) * math.pi / 180.0
-            angle_batch.append(angle)
+            radians[counter] = ((angleStep * counter + FSA) % 360) * math.pi / 180.0          # convert to radians
+            distances[counter] = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big') / 100   # convert to meters
+            luminances[counter] = byte_array[6 + i]
 
-            distance = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big') / 100
-            distance_batch.append(distance)
-
-            luminance = byte_array[6 + i]
-            luminance_batch.append(luminance)
-
-        return speed, timestamp, angle_batch, distance_batch, luminance_batch
+        return speed, timestamp, radians, distances, luminances
 
 
 def LD06_serial(port):
@@ -138,16 +133,16 @@ def LD06_serial(port):
     # port = {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()]  
     return serial.Serial(port=port, baudrate=230400, timeout=1.0, bytesize=8, parity='N', stopbits=1)
 
-def polar2cartesian(angles, distances, offset):
+def polar2cartesian(radians, distances, offset):
     # numpy implementation
-    angles = list(np.array(angles) + offset)
-    x_list = distances * -np.cos(angles)
-    y_list = distances * np.sin(angles)
+    radians = list(np.array(radians) + offset)
+    x_list = distances * -np.cos(radians)
+    y_list = distances * np.sin(radians)
 
     ## python implementation
-    # angles = [a + offset for a in angles]
-    # x_list = [d * -math.cos(a) for a, d in zip(angles, distances)]
-    # y_list = [d * math.sin(a) for a, d in zip(angles, distances)]
+    # radians = [a + offset for a in radians]
+    # x_list = [d * -math.cos(a) for a, d in zip(radians, distances)]
+    # y_list = [d * math.sin(a) for a, d in zip(radians, distances)]
     return x_list, y_list
 
 def save_csv(save_dir, points_2d, delimiter=','):
