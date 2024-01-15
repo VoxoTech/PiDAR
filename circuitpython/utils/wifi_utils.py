@@ -6,11 +6,12 @@ session = start_session(os.getenv('WIFI_SSID'), os.getenv('WIFI_PASSWORD'))
 print_response(session)
 '''
 
-import wifi
 import ssl
-import socketpool
-import adafruit_requests
-import microcontroller
+import wifi                 # type: ignore
+import socketpool           # type: ignore
+import adafruit_requests    # type: ignore
+import microcontroller      # type: ignore
+
 
 # private function
 def get_socketpool(ssid, password):
@@ -32,8 +33,8 @@ def print_response(session, url="https://www.adafruit.com/api/quotes.php"):
         print("Text Response: ", response_test)
         response.close()
         return response_test    
-    except:
-        except Exception as e:
+
+    except Exception as e:
         print("Error:\n", str(e))
         print("Resetting microcontroller!")
         microcontroller.reset()

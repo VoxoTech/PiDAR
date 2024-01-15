@@ -34,11 +34,11 @@ class plot_2D:
         self.line = self.ax.scatter(self.x_list, self.y_list, c=self.color_list/255, s=1)
         return self.line,
 
-    # def update_lists(self, x_list, y_list, luminance_list):
-    #     self.x_list = np.asarray(x_list)
-    #     self.y_list = np.asarray(y_list)
-    #     self.color_list = self.__gray2rgb__(np.asarray(luminance_list))
-    #     plt.pause(self.pause)
+    def update_lists(self, x_list, y_list, luminance_list):
+        self.x_list = np.asarray(x_list)
+        self.y_list = np.asarray(y_list)
+        self.color_list = self.__gray2rgb__(np.asarray(luminance_list))
+        plt.pause(self.pause)
 
     def update_coordinates(self, points_2d):  # points_2d: np.array([[luminance, x, y,], ...])
         self.x_list = points_2d[:, 0]

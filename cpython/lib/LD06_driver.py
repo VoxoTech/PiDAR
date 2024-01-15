@@ -5,7 +5,6 @@ https://storage.googleapis.com/mauser-public-images/prod_description_document/20
 375 batches/s x 12 samples/batch = 4500 samples/s
 '''
 
-import math
 import numpy as np
 import threading
 import time
@@ -42,12 +41,13 @@ class LD06:
         self.serial_connection.close()
         print("Serial connection closed.")
     
-    def read_continuously(self):
+    def read_loop(self):
         while self.serial_connection.is_open and keyboard.is_pressed('q') is False:
             self.viz_counter += 1
 
             try:
                 if self.viz_counter == self.viz_interval:
+                    # SAVE DATA
                     if self.save == 'npy':
                         t = threading.Thread(target=save_npy, args=(self.data_dir, self.points_2d))
                         t.start()
@@ -55,6 +55,7 @@ class LD06:
                         t = threading.Thread(target=save_csv, args=(self.data_dir, self.points_2d))
                         t.start()
                     
+                    # VISUALIZE
                     if self.visualization is not None:
                         self.visualization.update_coordinates(self.points_2d)
 
@@ -83,7 +84,8 @@ class LD06:
                             flag_2c = False
                             continue
                         
-                        speed, timestamp, angle_batch, distance_batch, luminance_batch = self.decode_bytes(self.byte_array)
+                        speed, timestamp, angle_batch, distance_batch, luminance_batch = self.decode(self.byte_array)
+                        
                         x_batch, y_batch = polar2cartesian(angle_batch, distance_batch, self.offset)
 
                         self.speeds.append(speed)
@@ -106,7 +108,7 @@ class LD06:
                 break
 
     @staticmethod
-    def decode_bytes(byte_array):  
+    def decode(byte_array):  
         dlength = 12  # byte_array[46] & 0x1F
         speed = int.from_bytes(byte_array[0:2][::-1], 'big') / 100            # rotational speed in degrees/second
         FSA = float(int.from_bytes(byte_array[2:4][::-1], 'big')) / 100       # start angle in degrees
@@ -116,16 +118,22 @@ class LD06:
 
         angleStep = (LSA - FSA) / (dlength-1) if LSA - FSA > 0 else (LSA + 360 - FSA) / (dlength-1)
 
-        # initialize arrays
-        radians = distances = luminances = np.zeros(dlength, dtype=np.float64)
+        angle_batch = list()
+        distance_batch = list()
+        luminance_batch = list()
 
         # 3 bytes per sample x 12 samples
         for counter, i in enumerate(range(0, 3 * dlength, 3)): 
-            radians[counter] = ((angleStep * counter + FSA) % 360) * math.pi / 180.0          # convert to radians
-            distances[counter] = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big') / 100   # convert to meters
-            luminances[counter] = byte_array[6 + i]
+            angle = ((angleStep * counter + FSA) % 360) * np.pi / 180.0
+            angle_batch.append(angle)
 
-        return speed, timestamp, radians, distances, luminances
+            distance = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big') / 100
+            distance_batch.append(distance)
+
+            luminance = byte_array[6 + i]
+            luminance_batch.append(luminance)
+
+        return speed, timestamp, angle_batch, distance_batch, luminance_batch
 
 
 def LD06_serial(port):
@@ -133,16 +141,10 @@ def LD06_serial(port):
     # port = {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()]  
     return serial.Serial(port=port, baudrate=230400, timeout=1.0, bytesize=8, parity='N', stopbits=1)
 
-def polar2cartesian(radians, distances, offset):
-    # numpy implementation
-    radians = list(np.array(radians) + offset)
+def polar2cartesian(angles, distances, offset):
+    radians = list(np.array(angles) + offset)
     x_list = distances * -np.cos(radians)
     y_list = distances * np.sin(radians)
-
-    ## python implementation
-    # radians = [a + offset for a in radians]
-    # x_list = [d * -math.cos(a) for a, d in zip(radians, distances)]
-    # y_list = [d * math.sin(a) for a, d in zip(radians, distances)]
     return x_list, y_list
 
 def save_csv(save_dir, points_2d, delimiter=','):
@@ -157,13 +159,12 @@ def save_npy(save_dir, points_2d):
 
 
 if __name__ == "__main__":
-    import math
     import os
     from matplotlib_utils import plot_2D
 
     # CONSTANTS
     PORT = "COM10"  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
-    ANGLE_OFFSET = math.pi / 2  # = 90°
+    ANGLE_OFFSET = np.pi / 2  # = 90°
     SAVE = 'npy'                # 'npy' or 'csv'
     DTYPE = np.float32
     DATA_DIR = "cpython/data"
@@ -184,6 +185,6 @@ if __name__ == "__main__":
 
     try:
         if lidar.serial_connection.is_open:
-            lidar.read_continuously()
+            lidar.read_loop()
     finally:
         lidar.close()

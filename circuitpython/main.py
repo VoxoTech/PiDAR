@@ -1,11 +1,34 @@
-import os
-import time
-import board
-import json
-import usb_cdc
+'''
+CircuitPython
+'''
+
+import board                        # type: ignore
+from usb_cdc import data as ser     # type: ignore
+import struct
+from time import time
+from json import dumps
 
 from utils.a4988_driver import A4988
 from utils.LD06_driver import LD06
+
+
+def encode_numpy(array, metadata=None):
+    # convert metadata to bytes
+    metadata_bytes = dumps(metadata).encode('utf-8')
+
+    # convert array to bytes
+    array_bytes = array.tobytes()
+
+    start_sequence = b'\x00\x00\x00\x00START'
+    end_sequence = b'END\x00\x00\x00\x00'
+    
+    data = (start_sequence +
+            struct.pack('!II', *array.shape) +
+            struct.pack('!I', len(array_bytes)) + array_bytes +
+            struct.pack('!I', len(metadata_bytes)) + metadata_bytes +
+            end_sequence)
+
+    return data
 
 
 # Stepper
@@ -23,26 +46,38 @@ lidar = LD06(uart_pin, pwm_pin, pwm_dc=pwm_dc)
 
 z_rotate = 0.5  # degrees
 
-loop_duration = 1  # seconds
-sendtime = time.monotonic()
 sending = False
+printed_waiting = False
 
 while True:
-    data = usb_cdc.data.readline().decode().strip()
-    
-    if data == "start":
-        sending = True
-        # lidar.pwm.duty_cycle = pwm_dc
-        
-        stepper.move_angle(z_rotate)  # rotate horizontally for next scan
+    if not sending and not printed_waiting:
+        print("[Waiting]")
+        printed_waiting = True
+    if ser.in_waiting > 0:
+        data = ser.readline().decode().strip()
+        if not sending and data == "start":
+            print("[Start received]")
+            sending = True
+            printed_waiting = False
+            lidar.set_pwm_dc = pwm_dc
+            stepper.move_angle(z_rotate)  # rotate horizontally for next scan
 
+        elif sending and data == "stop":
+            print("[Stop received]")
+            sending = False
+            lidar.set_pwm_dc = pwm_dc_stop
 
-    elif data == "stop":
-        sending = False
-        # lidar.pwm.duty_cycle = pwm_dc_stop
+    if sending:
 
-    if sending and time.monotonic() - sendtime >= loop_duration:
-        x_list, y_list, luminance_list = lidar.read_data()
-        data = json.dumps({"timestamp": time.time(), "x": x_list, "y": y_list, "luminance": luminance_list})
-        usb_cdc.data.write(data.encode() + b"\n")
-        sendtime = time.monotonic()
+        # read lidar data [x,y,luminance],[...],[...)
+        speed, timestamp, points_2d = lidar.read()
+
+        # create metadata
+        metadata = {"lidar_time": timestamp, "current_time": time(), "speed": speed}
+        print("[Sending] time:", time())  # metadata, points_2d.shape)
+
+        # encode np.array and metadata dictionary to bytes
+        binary_data = encode_numpy(points_2d, metadata)
+
+        # send data
+        ser.write(binary_data + b"\n")

@@ -6,8 +6,8 @@ microstepping:
 https://i.stack.imgur.com/vN7JL.png
 '''
 
-import board
-import digitalio
+import board        # type: ignore
+import digitalio    # type: ignore
 import time
 
 

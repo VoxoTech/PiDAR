@@ -1,5 +1,4 @@
 import numpy as np
-import math
 import os
 from lib.matplotlib_utils import plot_2D
 from lib.LD06_driver import LD06
@@ -7,7 +6,7 @@ from lib.LD06_driver import LD06
 
 # CONSTANTS
 PORT = "COM10"  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
-ANGLE_OFFSET = math.pi / 2  # 90°
+ANGLE_OFFSET = np.pi / 2  # 90°
 SAVE = 'npy'  # was 'csv' before
 DTYPE = np.float32
 DATA_DIR = "cpython/data"
@@ -27,6 +26,6 @@ lidar = LD06(port=PORT,
 
 try:
     if lidar.serial_connection.is_open:
-        lidar.read_continuously()
+        lidar.read_loop()
 finally:
     lidar.close()
