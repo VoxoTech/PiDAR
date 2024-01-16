@@ -10,26 +10,28 @@ import serial
 import keyboard
 
 try:
+    from lib.platform_dependent import init_serial, get_platform, init_pwm
     from lib.file_utils import save_data
 except:
+    from platform_dependent import init_serial, get_platform, init_pwm
     from file_utils import save_data
     
 
 class LD06:
     def __init__(self, port, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
+        self.platform           = get_platform()
+
         # constants
         self.start_byte         = bytes([0x54])
         self.dlength_byte       = bytes([0x2c])
         self.dlength            = 12  # 12 samples per batch
         self.package_len        = 47  # 45 byte + 0x54 + 0x2c
         self.deg2rad            = np.pi / 180
-
-        # angle offset
         self.offset             = offset
 
         # serial
         self.port               = port
-        self.serial_connection  = self.init_serial(self.port)
+        self.serial_connection  = init_serial(port=self.port, platform=self.platform)
         self.byte_array         = bytearray()
         self.flag_2c            = False
         self.dtype              = dtype
@@ -48,16 +50,18 @@ class LD06:
         self.points_2d          = np.empty((self.out_len * self.dlength, 3), dtype=self.dtype)  # [[x, y, l],[..
         
         # file format and visualization
-        self.data_dir = data_dir
-        self.format = format
-        self.visualization = visualization
+        self.data_dir           = data_dir
+        self.format             = format
+        self.visualization      = visualization
 
+        self.platform          = get_platform()
 
-    @staticmethod
-    def init_serial(port):
-        # import platform
-        # port = {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()]  
-        return serial.Serial(port=port, baudrate=230400, timeout=1.0, bytesize=8, parity='N', stopbits=1)
+        if self.platform == 'MCU':
+            pwm_pin = "GP2"
+            pwm_dc = 0.4
+            pwm_dc_16bit = int(pwm_dc * 65534)
+            pwm = init_pwm(pwm_pin)
+            pwm.duty_cycle = pwm_dc_16bit
     
 
     def close(self):
@@ -110,7 +114,6 @@ class LD06:
                 x_batch, y_batch = self.polar2cartesian(self.angle_batch, self.distance_batch, self.offset)
                 points_batch = np.column_stack((x_batch, y_batch, self.luminance_batch)).astype(self.dtype)
 
-                print(self.speed, self.timestamp)
                 # write into preallocated output arrays at current index
                 self.speeds[self.out_i] = self.speed
                 self.timestamps[self.out_i] = self.timestamp
