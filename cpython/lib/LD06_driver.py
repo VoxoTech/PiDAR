@@ -10,12 +10,11 @@ import threading
 import serial
 import keyboard
 
-# TODO: do that more cleanly
 try:
-    from file_utils import save_npy, save_csv
-except:
     from lib.file_utils import save_npy, save_csv
-
+except:
+    from file_utils import save_npy, save_csv
+    
 
 class LD06:
     def __init__(self, port, offset=0, data_dir="data", save=None, visualization=None, viz_interval=40, dtype=np.float32):

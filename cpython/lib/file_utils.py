@@ -3,23 +3,34 @@ import numpy as np
 import csv
 import time
 
-# TODO: do that more cleanly
 try:
-    from open3d_utils import rotate_3D
+    from lib.open3d_utils import rotate_3D 
 except:
-    from lib.open3d_utils import rotate_3D
+    from open3d_utils import rotate_3D
 
 
-def save_csv(save_dir, points_2d, delimiter=','):
-    filename = f"{save_dir}/{time.time()}.csv"
+def save_csv(save_dir, points_2d, delimiter=',', filename=None):
+    if filename is None:
+        filename = f"{save_dir}/{time.time()}.csv"
+
     with open(filename, 'w', newline='') as f:
         writer = csv.writer(f, delimiter=delimiter)
         writer.writerows(points_2d)
 
 
-def save_npy(save_dir, points_2d):
-    filename = f"{save_dir}/{time.time()}.npy"
+def save_npy(save_dir, points_2d, filename=None):
+    if filename is None:
+        filename = f"{save_dir}/{time.time()}.npy"
+
     np.save(filename, points_2d)
+
+
+def convert_npy_to_csv(dir):
+    npy_files = list_files(dir, '.npy')
+    for npy_file in npy_files:
+        data = np.load(npy_file)
+        csv_file = os.path.splitext(npy_file)[0] + '.csv'
+        save_csv(os.path.dirname(csv_file), data, filename=csv_file)
 
 
 def list_files(dir, extension=None):
@@ -56,3 +67,9 @@ def merge_data(path, angle_step=0, up_axis="Z", format='npy', delimiter=","):
 
         angle += angle_step
     return pointcloud
+
+
+if __name__ == "__main__":
+    # convert all npy to csv files
+    DATA_DIR = "cpython/data"
+    convert_npy_to_csv(DATA_DIR)
