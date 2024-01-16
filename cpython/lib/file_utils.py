@@ -3,7 +3,11 @@ import numpy as np
 import csv
 import time
 
-from open3d_utils import rotate_3D
+# TODO: do that more cleanly
+try:
+    from open3d_utils import rotate_3D
+except:
+    from lib.open3d_utils import rotate_3D
 
 
 def save_csv(save_dir, points_2d, delimiter=','):

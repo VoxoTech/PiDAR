@@ -10,7 +10,11 @@ import threading
 import serial
 import keyboard
 
-from file_utils import save_npy, save_csv
+# TODO: do that more cleanly
+try:
+    from file_utils import save_npy, save_csv
+except:
+    from lib.file_utils import save_npy, save_csv
 
 
 class LD06:
