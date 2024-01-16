@@ -81,17 +81,11 @@ if __name__ == "__main__":
     visualisation = plot_2D()
 
     while ser.is_open and keyboard.is_pressed('q') is False:
-
         if ser.in_waiting > 0:
-
             metadata, points_2d = read_data(ser)
-
             if metadata and points_2d is not None:
-                
                 print("[Received]", metadata, points_2d.shape, points_2d[0])
-
                 save_data(data_dir, metadata, points_2d)
-                
                 # Update the visualization
                 visualisation.update_coordinates(points_2d)
 

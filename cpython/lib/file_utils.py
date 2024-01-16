@@ -2,11 +2,20 @@ import os
 import numpy as np
 import csv
 import time
+import threading
 
 try:
     from lib.open3d_utils import rotate_3D 
 except:
     from open3d_utils import rotate_3D
+
+
+def save_data(data_dir, np_array, format='npy'):
+    if format == 'npy':
+        t = threading.Thread(target=save_npy, args=(data_dir, np_array))
+    else:  # format == 'csv':
+        t = threading.Thread(target=save_csv, args=(data_dir, np_array))
+    t.start()
 
 
 def save_csv(save_dir, points_2d, delimiter=',', filename=None):
