@@ -7,32 +7,46 @@ https://storage.googleapis.com/mauser-public-images/prod_description_document/20
 
 import numpy as np
 import threading
-import time
 import serial
 import keyboard
-import csv
+
+from file_utils import save_npy, save_csv
 
 
 class LD06:
     def __init__(self, port, offset=0, data_dir="data", save=None, visualization=None, viz_interval=40, dtype=np.float32):
-        self.port = port
-        self.serial_connection = LD06_serial(self.port)
+        # angle offset
         self.offset = offset
 
-        self.data_dir = data_dir
-        self.save = save
-        self.visualization = visualization
-        self.viz_interval = viz_interval
-
+        # serial
+        self.port = port
+        self.serial_connection = self.init_serial(self.port)
         self.byte_array = bytearray()
         self.flag_2c = False
         self.viz_counter = 0
-
+        self.dtype = dtype
+        
+        # init ouput array
+        self.points_2d = np.empty((0,3), dtype=self.dtype)
         self.speeds = list()  
         self.timestamps = list()
-        self.dtype = dtype
-        self.points_2d = np.empty((0,3), dtype=self.dtype)
+        
+        # saving data
+        self.data_dir = data_dir
+        self.save = save
+
+        # visualization
+        self.visualization = visualization
+        self.viz_interval = viz_interval
+
+
+    @staticmethod
+    def init_serial(port):
+        # import platform
+        # port = {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()]  
+        return serial.Serial(port=port, baudrate=230400, timeout=1.0, bytesize=8, parity='N', stopbits=1)
     
+
     def close(self):
         print("Closing...")
         if self.visualization is not None:
@@ -41,6 +55,7 @@ class LD06:
         self.serial_connection.close()
         print("Serial connection closed.")
     
+
     def read_loop(self):
         while self.serial_connection.is_open and keyboard.is_pressed('q') is False:
             self.viz_counter += 1
@@ -86,7 +101,7 @@ class LD06:
                         
                         speed, timestamp, angle_batch, distance_batch, luminance_batch = self.decode(self.byte_array)
                         
-                        x_batch, y_batch = polar2cartesian(angle_batch, distance_batch, self.offset)
+                        x_batch, y_batch = self.polar2cartesian(angle_batch, distance_batch, self.offset)
 
                         self.speeds.append(speed)
                         self.timestamps.append(timestamp)
@@ -107,6 +122,7 @@ class LD06:
                 print("Serial connection closed.")
                 break
 
+
     @staticmethod
     def decode(byte_array):  
         dlength = 12  # byte_array[46] & 0x1F
@@ -116,7 +132,7 @@ class LD06:
         timestamp = int.from_bytes(byte_array[42:44][::-1], 'big')            # timestamp in milliseconds
         CS = int.from_bytes(byte_array[44:45][::-1], 'big')                   # CRC Checksum                                
 
-        angleStep = (LSA - FSA) / (dlength-1) if LSA - FSA > 0 else (LSA + 360 - FSA) / (dlength-1)
+        angleStep = ((LSA - FSA) if LSA - FSA > 0 else (LSA + 360 - FSA)) / (dlength-1)
 
         angle_batch = list()
         distance_batch = list()
@@ -136,26 +152,13 @@ class LD06:
         return speed, timestamp, angle_batch, distance_batch, luminance_batch
 
 
-def LD06_serial(port):
-    # import platform
-    # port = {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()]  
-    return serial.Serial(port=port, baudrate=230400, timeout=1.0, bytesize=8, parity='N', stopbits=1)
+    @staticmethod
+    def polar2cartesian(angles, distances, offset):
+        angles = list(np.array(angles) + offset)
+        x_list = distances * -np.cos(angles)
+        y_list = distances * np.sin(angles)
+        return x_list, y_list
 
-def polar2cartesian(angles, distances, offset):
-    radians = list(np.array(angles) + offset)
-    x_list = distances * -np.cos(radians)
-    y_list = distances * np.sin(radians)
-    return x_list, y_list
-
-def save_csv(save_dir, points_2d, delimiter=','):
-    filename = f"{save_dir}/{time.time()}.csv"
-    with open(filename, 'w', newline='') as f:
-        writer = csv.writer(f, delimiter=delimiter)
-        writer.writerows(points_2d)
-
-def save_npy(save_dir, points_2d):
-    filename = f"{save_dir}/{time.time()}.npy"
-    np.save(filename, points_2d)
 
 
 if __name__ == "__main__":

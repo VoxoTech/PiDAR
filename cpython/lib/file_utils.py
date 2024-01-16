@@ -1,7 +1,21 @@
 import os
 import numpy as np
+import csv
+import time
 
-from lib.open3d_utils import rotate_3D
+from open3d_utils import rotate_3D
+
+
+def save_csv(save_dir, points_2d, delimiter=','):
+    filename = f"{save_dir}/{time.time()}.csv"
+    with open(filename, 'w', newline='') as f:
+        writer = csv.writer(f, delimiter=delimiter)
+        writer.writerows(points_2d)
+
+
+def save_npy(save_dir, points_2d):
+    filename = f"{save_dir}/{time.time()}.npy"
+    np.save(filename, points_2d)
 
 
 def list_files(dir, extension=None):
