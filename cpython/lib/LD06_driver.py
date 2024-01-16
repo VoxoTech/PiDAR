@@ -17,7 +17,7 @@ except:
     
 
 class LD06:
-    def __init__(self, port, offset=0, data_dir="data", save=None, visualization=None, viz_interval=40, dtype=np.float32):
+    def __init__(self, port, offset=0, data_dir="data", format=None, visualization=None, interval=40, dtype=np.float32):
         # angle offset
         self.offset = offset
 
@@ -25,22 +25,25 @@ class LD06:
         self.port = port
         self.serial_connection = self.init_serial(self.port)
         self.byte_array = bytearray()
+        self.dlength = 12
         self.flag_2c = False
-        self.viz_counter = 0
         self.dtype = dtype
         
         # init ouput array
-        self.points_2d = np.empty((0,3), dtype=self.dtype)
-        self.speeds = list()  
-        self.timestamps = list()
+        self.interval = interval
+        self.__init_arrays__()
         
-        # saving data
+        # file format and visualization
         self.data_dir = data_dir
-        self.save = save
-
-        # visualization
+        self.format = format
         self.visualization = visualization
-        self.viz_interval = viz_interval
+
+
+    def __init_arrays__(self):
+        self.points_2d  = np.empty((self.interval * self.dlength, 3), dtype=self.dtype)
+        self.speeds     = np.empty(self.interval, dtype=self.dtype)
+        self.timestamps = np.empty(self.interval, dtype=self.dtype)
+        self.counter = 0
 
 
     @staticmethod
@@ -61,15 +64,13 @@ class LD06:
 
     def read_loop(self):
         while self.serial_connection.is_open and keyboard.is_pressed('q') is False:
-            self.viz_counter += 1
-
             try:
-                if self.viz_counter == self.viz_interval:
+                if self.counter == self.interval:
                     # SAVE DATA
-                    if self.save == 'npy':
+                    if self.format == 'npy':
                         t = threading.Thread(target=save_npy, args=(self.data_dir, self.points_2d))
                         t.start()
-                    if self.save == 'csv':
+                    if self.format == 'csv':
                         t = threading.Thread(target=save_csv, args=(self.data_dir, self.points_2d))
                         t.start()
                     
@@ -78,10 +79,7 @@ class LD06:
                         self.visualization.update_coordinates(self.points_2d)
 
                     # reset lists
-                    self.speeds.clear()
-                    self.timestamps.clear()
-                    self.points_2d = np.empty((0,3), dtype=self.dtype)
-                    self.viz_counter = 0
+                    self.__init_arrays__()
             
                 # iterate through serial stream until start package is found
                 flag_2c = False
@@ -102,15 +100,15 @@ class LD06:
                             flag_2c = False
                             continue
                         
-                        speed, timestamp, angle_batch, distance_batch, luminance_batch = self.decode(self.byte_array)
-                        
+                        speed, timestamp, angle_batch, distance_batch, luminance_batch = self.decode(self.byte_array, dlength=self.dlength)
+
                         x_batch, y_batch = self.polar2cartesian(angle_batch, distance_batch, self.offset)
+                        points_batch = np.column_stack((x_batch, y_batch, luminance_batch)).astype(self.dtype)
 
-                        self.speeds.append(speed)
-                        self.timestamps.append(timestamp)
-
-                        # append to points_2d
-                        self.points_2d = np.vstack((self.points_2d, np.column_stack((x_batch, y_batch, luminance_batch)))).astype(self.dtype)
+                        # append to output arrays
+                        self.speeds[self.counter] = speed
+                        self.timestamps[self.counter] = timestamp
+                        self.points_2d[self.counter*self.dlength:(self.counter+1)*self.dlength] = points_batch
 
                         # reset byte_array
                         self.byte_array = bytearray()
@@ -125,10 +123,12 @@ class LD06:
                 print("Serial connection closed.")
                 break
 
+            self.counter += 1
+
 
     @staticmethod
-    def decode(byte_array):  
-        dlength = 12  # byte_array[46] & 0x1F
+    def decode(byte_array, dlength=12):  
+        # dlength = 12  # byte_array[46] & 0x1F
         speed = int.from_bytes(byte_array[0:2][::-1], 'big') / 100            # rotational speed in degrees/second
         FSA = float(int.from_bytes(byte_array[2:4][::-1], 'big')) / 100       # start angle in degrees
         LSA = float(int.from_bytes(byte_array[40:42][::-1], 'big')) / 100     # end angle in degrees
@@ -170,12 +170,12 @@ if __name__ == "__main__":
 
     # CONSTANTS
     PORT = "COM10"  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
-    ANGLE_OFFSET = np.pi / 2  # = 90°
-    SAVE = 'npy'                # 'npy' or 'csv'
+    ANGLE_OFFSET = np.pi / 2    # = 90°
+    FORMAT = 'csv'              # 'npy' or 'csv'
     DTYPE = np.float32
     DATA_DIR = "cpython/data"
     VISUALIZATION = plot_2D()   # plot_2D() or None
-    VIZ_INTERVAL = 40           # visualize after every nth batch
+    INTERVAL = 40               # visualize after every nth batch
 
     # ensure output directory
     if not os.path.exists(DATA_DIR):
@@ -184,10 +184,10 @@ if __name__ == "__main__":
     lidar = LD06(port=PORT,
                 visualization=VISUALIZATION,
                 offset=ANGLE_OFFSET, 
-                save=SAVE,
+                format=FORMAT,
                 dtype=DTYPE,
                 data_dir=DATA_DIR,
-                viz_interval=VIZ_INTERVAL)
+                interval=INTERVAL)
 
     try:
         if lidar.serial_connection.is_open:
