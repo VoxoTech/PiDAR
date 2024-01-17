@@ -21,13 +21,13 @@ def boardpin(pin):
     return getattr(board, pin)
     
 
-def init_serial(platform=None, port='COM10', pin='GP1'):
+def init_serial(platform=None, port='COM1', pin='GP1'):
     baudrate = 230400
     bits = 8
     stopbits = 1
 
     if platform == 'PC':
-        port = 'COM10'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}
+        # port = {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}
         return serial.Serial(port=port, baudrate=baudrate, timeout=1.0, bytesize=bits, parity='N', stopbits=stopbits)
     
     elif platform == 'MCU':

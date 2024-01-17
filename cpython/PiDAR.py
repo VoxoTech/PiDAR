@@ -5,7 +5,8 @@ from lib.LD06_driver import LD06
 
 
 # CONSTANTS
-PORT = "COM10"  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
+# dmesg | grep "tty"
+PORT = '/dev/ttyUSB0'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
 ANGLE_OFFSET = np.pi / 2    # = 90°
 FORMAT = 'npy'              # 'npy' or 'csv' or None
 DTYPE = np.float32
