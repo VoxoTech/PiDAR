@@ -7,14 +7,18 @@ https://storage.googleapis.com/mauser-public-images/prod_description_document/20
 
 import numpy as np
 import serial
+import os
 
 try:
-    from lib.platform_dependent import init_serial, get_platform, init_pwm
+    # running from project root
+    from lib.platform_specific import *
     from lib.file_utils import save_data
 except:
-    from platform_dependent import init_serial, get_platform, init_pwm
+    # testing from this file
+    from platform_specific import *
     from file_utils import save_data
-    
+
+# import_by_platform()
 
 class LD06:
     def __init__(self, port, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
@@ -30,7 +34,10 @@ class LD06:
 
         # serial
         self.port               = port
-        self.serial_connection  = init_serial(port=self.port, platform=self.platform)
+        if self.platform in ['Pico', 'Pico W', 'Metro M7']:
+            self.serial_connection  = init_serial_MCU(pin=self.port)
+        elif self.platform in ['Windows', 'Linux', 'RaspberryPi']:
+            self.serial_connection  = init_serial_USB(port=self.port)
         self.byte_array         = bytearray()
         self.flag_2c            = False
         self.dtype              = dtype
@@ -53,14 +60,17 @@ class LD06:
         self.format             = format
         self.visualization      = visualization
 
-        self.platform          = get_platform()
-
-        if self.platform == 'MCU':
+        # platform-specific
+        if self.platform in ['Pico', 'Pico W', 'Metro M7']:
             pwm_pin = "GP2"
             pwm_dc = 0.4
             pwm_dc_16bit = int(pwm_dc * 65534)
             pwm = init_pwm(pwm_pin)
             pwm.duty_cycle = pwm_dc_16bit
+        
+        elif self.platform == 'RaspberryPi':
+            # disable OpenGL
+            os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1'
     
 
     def close(self):
@@ -162,7 +172,6 @@ class LD06:
 
 
 if __name__ == "__main__":
-    import os
     from matplotlib_utils import plot_2D
 
     # CONSTANTS

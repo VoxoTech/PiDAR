@@ -12,6 +12,11 @@ Finally, dotting the rotation matrix with the vector will rotate the vector.
 rotation
 https://www.kite.com/python/answers/how-to-rotate-a-3d-vector-about-an-axis-in-python
 https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.html
+
+# check opengl version
+sudo apt-get install mesa-utils libgl1-mesa-dri
+glxinfo | grep "OpenGL version"
+>> OpenGL version string: 3.1 Mesa 23.2.1-1~bpo12+rpt2
 """
 
 import numpy as np
