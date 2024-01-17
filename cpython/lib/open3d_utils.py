@@ -49,6 +49,7 @@ def plot_3D(pointcloud):
         pcd.colors = o3d.utility.Vector3dVector(colors)
 
     o3d.visualization.draw_geometries([pcd])
+    return pcd
 
 
 class IMU_Visualizer:
