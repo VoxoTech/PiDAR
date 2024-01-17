@@ -160,7 +160,7 @@ if __name__ == "__main__":
     from matplotlib_utils import plot_2D
 
     # CONSTANTS
-    PORT = 'COM1'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
+    PORT = 'COM10'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
     ANGLE_OFFSET = np.pi / 2    # = 90°
     FORMAT = 'npy'              # 'npy' or 'csv' or None
     DTYPE = np.float32

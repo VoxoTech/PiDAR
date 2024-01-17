@@ -21,7 +21,7 @@ def boardpin(pin):
     return getattr(board, pin)
     
 
-def init_serial(platform=None, port='COM1', pin='GP1'):
+def init_serial(platform=None, port='COM10', pin='GP1'):
     baudrate = 230400
     bits = 8
     stopbits = 1
