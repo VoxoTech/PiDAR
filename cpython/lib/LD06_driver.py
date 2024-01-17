@@ -7,7 +7,6 @@ https://storage.googleapis.com/mauser-public-images/prod_description_document/20
 
 import numpy as np
 import serial
-import keyboard
 
 try:
     from lib.platform_dependent import init_serial, get_platform, init_pwm
@@ -73,7 +72,14 @@ class LD06:
     
 
     def read_loop(self):
-        while self.serial_connection.is_open and keyboard.is_pressed('q') is False:
+        if self.visualization is not None:
+            # matplotlib close event
+            def on_close(event):
+                self.serial_connection.close()
+                print("Serial connection closed.")
+            self.visualization.fig.canvas.mpl_connect('close_event', on_close)
+
+        while self.serial_connection.is_open:
             try:
                 if self.out_i == self.out_len:
                     # SAVE DATA
