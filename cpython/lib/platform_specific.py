@@ -4,7 +4,7 @@ import os
 
 def get_platform():
     platform = sys.platform
-    print("sys.platform:", platform)
+    # print("sys.platform:", platform)
 
     if "win32" in platform:
         platform = 'Windows'
@@ -12,10 +12,10 @@ def get_platform():
         platform = 'Mac'
     else:
         machine = os.uname().machine
-        print("os.uname().machine:", machine)
+        # print("os.uname():",  os.uname())
 
         if 'linux' in platform:
-            if 'Raspberry' in machine:
+            if 'aarch64' in machine:
                 platform =  'RaspberryPi'
             else:
                 platform = 'Linux'
