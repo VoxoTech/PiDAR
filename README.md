@@ -36,6 +36,9 @@ The calculation method of the angle is as following:
 
 len is the length of the packet, and the i value range is [0, len].
 
+## Troubeshooting
+- slow VNC under Raspberry Pi Bookworm: add video=HDMI-A-1:1920x1080@60D to /boot/config.txt
+
 
 ## About LD06(LDS06)
 - [Sales page](https://www.inno-maker.com/product/lidar-ld06/)
