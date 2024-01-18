@@ -36,8 +36,12 @@ The calculation method of the angle is as following:
 
 len is the length of the packet, and the i value range is [0, len].
 
-## Troubeshooting
-- slow VNC under Raspberry Pi Bookworm: add video=HDMI-A-1:1920x1080@60D to /boot/config.txt
+
+## Panorama
+> sudo apt-get install hugin-tools
+> sudo apt-get install enblend
+
+stitching is based on [StereoPi](https://medium.com/stereopi/stitching-360-panorama-with-raspberry-pi-cm3-stereopi-and-two-fisheye-cameras-step-by-step-guide-aeca3ff35871).
 
 
 ## About LD06(LDS06)
@@ -45,3 +49,22 @@ len is the length of the packet, and the i value range is [0, len].
 - [mechanical Datasheet](https://www.inno-maker.com/wp-content/uploads/2020/11/LDROBOT_LD06_Datasheet.pdf)
 - [Protocol Description](https://storage.googleapis.com/mauser-public-images/prod_description_document/2021/315/8fcea7f5d479f4f4b71316d80b77ff45_096-6212_a.pdf)
 - another potentially interesting implementation: [pyLIDAR](https://github.com/Paradoxdruid/pyLIDAR)
+
+
+## Troubleshooting
+### VNC on Raspberry Pi bookworm
+use TigerVNC instead:
+https://wiki.ubuntuusers.de/Howto/TigerVNC/
+
+> sudo apt install tigervnc-standalone-server
+
+> sudo nano /etc/tigervnc/vncserver-config-mandatory
+$localhost = "no";
+
+> sudo tigervncpasswd
+
+> sudo nano /etc/tigervnc/vncserver.users
+1:=pi
+
+> sudo systemctl enable tigervncserver@:1.service
+> sudo systemctl start tigervncserver@:1.service 
