@@ -1,7 +1,7 @@
-import usb_cdc
-import board
-import digitalio
-import storage
+import usb_cdc      # type: ignore
+import board        # type: ignore
+import digitalio    # type: ignore
+import storage      # type: ignore
 
 # write access if the GP0 is connected to ground
 write_access_pin = board.GP0
