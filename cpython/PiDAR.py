@@ -6,7 +6,8 @@ from lib.LD06_driver import LD06
 
 # CONSTANTS
 # dmesg | grep "tty"
-PORT = '/dev/ttyUSB0'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
+PORT = '/dev/ttyS0'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyS0', 'Linux': '/dev/ttyUSB0'}
+PWM_DC = 0.23                # duty cycle: 0.23 = 10 Hz, 0.1 = 4 Hz
 ANGLE_OFFSET = np.pi / 2    # = 90°
 FORMAT = 'npy'              # 'npy' or 'csv' or None
 DTYPE = np.float32
@@ -19,6 +20,7 @@ if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
 lidar = LD06(port=PORT,
+            pwm_dc = PWM_DC,
             visualization=VISUALIZATION,
             offset=ANGLE_OFFSET, 
             format=FORMAT,

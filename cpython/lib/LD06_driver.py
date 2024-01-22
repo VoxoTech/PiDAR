@@ -18,10 +18,9 @@ except:
     from platform_specific import *
     from file_utils import save_data
 
-# import_by_platform()
 
 class LD06:
-    def __init__(self, port, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
+    def __init__(self, port=None, pwm_dc=0.4, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
         self.platform           = get_platform()
 
         # constants
@@ -36,8 +35,9 @@ class LD06:
         self.port               = port
         if self.platform in ['Pico', 'Pico W', 'Metro M7']:
             self.serial_connection  = init_serial_MCU(pin=self.port)
-        elif self.platform in ['Windows', 'Linux', 'RaspberryPi']:
-            self.serial_connection  = init_serial_USB(port=self.port)
+        else:  # self.platform in ['Windows', 'Linux', 'RaspberryPi']:
+            self.serial_connection  = init_serial(port=self.port)
+        
         self.byte_array         = bytearray()
         self.flag_2c            = False
         self.dtype              = dtype
@@ -60,23 +60,34 @@ class LD06:
         self.format             = format
         self.visualization      = visualization
 
+        self.pwm = None
+        self.pwm_dc = pwm_dc
+        
         # platform-specific
         if self.platform in ['Pico', 'Pico W', 'Metro M7']:
             pwm_pin = "GP2"
-            pwm_dc = 0.4
-            pwm_dc_16bit = int(pwm_dc * 65534)
-            pwm = init_pwm(pwm_pin)
-            pwm.duty_cycle = pwm_dc_16bit
+            pwm = init_pwm_MCU(pwm_pin)
+            pwm.duty_cycle = int(self.pwm_dc * 65534)
         
         elif self.platform == 'RaspberryPi':
+            pwm_channel = 0
+            pwm = init_pwm_Pi(pwm_channel)
+            pwm.start(int(self.pwm_dc * 100))
+            # pwm.change_duty_cycle(50)            
+
             # disable OpenGL
             os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1'
     
 
     def close(self):
-        print("Closing...")
+        if self.pwm is not None:
+            self.pwm.stop()
+            print("PWM stopped.")
+
         if self.visualization is not None:
             self.visualization.close()
+            print("Visualization closed.")
+
         self.serial_connection.close()
         print("Serial connection closed.")
     
@@ -86,12 +97,14 @@ class LD06:
             # matplotlib close event
             def on_close(event):
                 self.serial_connection.close()
-                print("Serial connection closed.")
+                print("Closing...")
             self.visualization.fig.canvas.mpl_connect('close_event', on_close)
 
         while self.serial_connection.is_open:
             try:
                 if self.out_i == self.out_len:
+                    print("speed:", round(self.speed, 2))
+                    
                     # SAVE DATA
                     if self.format is not None:
                         save_data(self.data_dir, self.points_2d, self.format)
@@ -101,7 +114,7 @@ class LD06:
                     self.out_i = 0
                 self.read()
             except serial.SerialException:
-                print("Serial connection closed.")
+                print("SerialException")
                 break
             self.out_i += 1
 

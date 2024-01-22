@@ -15,6 +15,27 @@ influenced by:
 - [ShaunPrice's](https://github.com/ShaunPrice/360-camera) StereoPi-supporting fork of [BrianBock's](https://github.com/BrianBock/360-camera) 360-camera script
 
 
+## wiring
+
+LD06 port (left to right)
+- UART Tx, PWM, GND, 5V
+
+if directly attached to Raspberry Pi:
+- LD06 UART0 Rx: GP15 (Pin10)
+- LD06 PWM0: GP18 (Pin12)
+- LD06 5V: Pin2 or Pin4
+- LD06 GND: e.g. Pin6 or Pin14
+
+if attached to Pico:
+- LD06 UART0 Rx: GP1 (Pin2)
+- LD06 PWM: GP2 (Pin4)
+- LD06 5V: VBUS (Pin40)
+- LD06 GND: e.g. Pin38
+- A4988 direction: GP15 (pin20)
+- A4988 step: GP14 (Pin19)
+- A4988 microstepping: GP11, GP12, GP13 (Pin 15,16,17)
+
+
 ### Serial Protocol
 baudrate 230400, data bits 8, no parity, 1 stopbit  
 sampling frequency 4500, scan frequency 5-13 Hz, distance 2cm - 12 meter, ambient light 30 kLux
@@ -31,17 +52,57 @@ total package size: 48 Byte, big endian.
 
 The Angle value of each data point is obtained by linear interpolation of the starting angle and the ending angle.  
 The calculation method of the angle is as following:
-> step = (end_angle – start_angle)/(len – 1)  
-> angle = start_angle + step*i  
+
+    step = (end_angle – start_angle)/(len – 1)  
+    angle = start_angle + step*i  
 
 len is the length of the packet, and the i value range is [0, len].
 
+## Permission for Serial Access on Raspberry Pi
+temporary solution: 
+
+    sudo chmod a+rw /dev/ttyS0
+
+permanent solution:
+
+    sudo usermod -a -G dialout pi
+    
+    sudo bash -c 'cat > /etc/systemd/system/ttyS0-permissions.service' << EOF
+    [Unit]
+    Description=Set permissions for /dev/ttyS0
+
+    [Service]
+    ExecStart=/bin/bash -c '/bin/chgrp dialout /dev/ttyS0 && /bin/chmod g+rw /dev/ttyS0'
+
+    [Install]
+    WantedBy=multi-user.target
+    EOF
+
+    sudo systemctl enable ttyS0-permissions
+    sudo systemctl start ttyS0-permissions
+    sudo systemctl status ttyS0-permissions
+
+
+## Hardware PWM on Raspberry Pi
+enable GPIO_18 (PWM0) and GPIO_19 (PWM1)
+    
+    echo "dtoverlay=pwm-2chan" >> /boot/config.txt 
+
+check if "pwm_bcm2835" now exists:
+
+    lsmod | grep pwm
+
+Install [RPi Hardware PWM library](https://github.com/Pioreactor/rpi_hardware_pwm):
+
+    pip install rpi-hardware-pwm
+
 
 ## Panorama
-> sudo apt-get install hugin-tools
-> sudo apt-get install enblend
+install Hugin with enblend plugin
 
-stitching is based on [StereoPi](https://medium.com/stereopi/stitching-360-panorama-with-raspberry-pi-cm3-stereopi-and-two-fisheye-cameras-step-by-step-guide-aeca3ff35871).
+    sudo apt-get install hugin-tools enblend
+
+the stitching script is inspired by [StereoPi](https://medium.com/stereopi/stitching-360-panorama-with-raspberry-pi-cm3-stereopi-and-two-fisheye-cameras-step-by-step-guide-aeca3ff35871).
 
 
 ## About LD06(LDS06)
@@ -52,19 +113,24 @@ stitching is based on [StereoPi](https://medium.com/stereopi/stitching-360-panor
 
 
 ## Troubleshooting
+
 ### VNC on Raspberry Pi bookworm
 use TigerVNC instead:
 https://wiki.ubuntuusers.de/Howto/TigerVNC/
 
-> sudo apt install tigervnc-standalone-server
+    sudo apt install tigervnc-standalone-server
+    sudo nano /etc/tigervnc/vncserver-config-mandatory
 
-> sudo nano /etc/tigervnc/vncserver-config-mandatory
 $localhost = "no";
 
-> sudo tigervncpasswd
+    sudo tigervncpasswd
+    sudo nano /etc/tigervnc/vncserver.users
 
-> sudo nano /etc/tigervnc/vncserver.users
 1:=pi
 
-> sudo systemctl enable tigervncserver@:1.service
-> sudo systemctl start tigervncserver@:1.service 
+    sudo systemctl enable tigervncserver@:1.service  
+    sudo systemctl start tigervncserver@:1.service
+
+if necessary, define resolution and framerate:
+
+    echo "video=HDMI-A-1:1920x1080@60D" >> /boot/config.txt 
