@@ -103,7 +103,7 @@ class LD06:
         while self.serial_connection.is_open:
             try:
                 if self.out_i == self.out_len:
-                    print("speed:", round(self.speed, 2))
+                    # print("speed:", round(self.speed, 2))
                     
                     # SAVE DATA
                     if self.format is not None:

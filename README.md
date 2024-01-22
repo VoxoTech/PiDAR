@@ -72,7 +72,7 @@ permanent solution:
     Description=Set permissions for /dev/ttyS0
 
     [Service]
-    ExecStart=/bin/bash -c '/bin/chgrp dialout /dev/ttyS0 && /bin/chmod g+rw /dev/ttyS0'
+    ExecStart=/bin/bash -c 'sudo /bin/chmod a+rw /dev/ttyS0'
 
     [Install]
     WantedBy=multi-user.target
