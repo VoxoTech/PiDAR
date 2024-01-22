@@ -3,6 +3,7 @@ matplotlib>=3.3.4
 pyserial>=3.5
 scipy>=1.8.0
 open3d>=0.13.0
+rpi-hardware-pwm
 
 # adafruit_board_toolkit
 # aioconsole

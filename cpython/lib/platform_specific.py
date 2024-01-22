@@ -64,3 +64,20 @@ if __name__ == "__main__":
     platform = get_platform()
 
     print("platform:", platform)
+
+
+
+'''
+TODO: GPIO_15 UART0_RX
+
+TODO: dtoverlay=pwm-2chan to /boot/config.txt -> GPIO_18 (PWM0) and GPIO_19 PWM1)
+'''
+# from rpi_hardware_pwm import HardwarePWM
+
+# pwm = HardwarePWM(pwm_channel=0, hz=60, chip=0)
+# pwm.start(100) # full duty cycle
+
+# pwm.change_duty_cycle(50)
+# pwm.change_frequency(25_000)
+
+# pwm.stop()
