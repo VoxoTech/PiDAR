@@ -1,16 +1,14 @@
 # temps
 .vscode
 __pycache__
-cpython/_temp
 
 # private
-circuitpython/settings.toml
 todo.md
 
 # work in progress
-mechanical_design
-circuitpython/lib
-_other
+mechanical_design/*
+!mechanical_design/v1
+_old
 
 # data directory
-cpython/data
+/data

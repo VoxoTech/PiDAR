@@ -6,23 +6,22 @@ microstepping:
 https://i.stack.imgur.com/vN7JL.png
 '''
 
-import board        # type: ignore
-import digitalio    # type: ignore
+import RPi.GPIO as GPIO     # type: ignore
 import time
-
 
 class A4988:
     def __init__(self, dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=1.0):
+        GPIO.setmode(GPIO.BCM)
         
-        self.dir_pin = digitalio.DigitalInOut(dir_pin)
-        self.dir_pin.direction = digitalio.Direction.OUTPUT
+        self.dir_pin = dir_pin
+        GPIO.setup(self.dir_pin, GPIO.OUT)
 
-        self.step_pin = digitalio.DigitalInOut(step_pin)
-        self.step_pin.direction = digitalio.Direction.OUTPUT
+        self.step_pin = step_pin
+        GPIO.setup(self.step_pin, GPIO.OUT)
 
-        self.ms_pins = [digitalio.DigitalInOut(pin) for pin in ms_pins]
+        self.ms_pins = ms_pins
         for pin in self.ms_pins:
-            pin.direction = digitalio.Direction.OUTPUT
+            GPIO.setup(pin, GPIO.OUT)
 
         self.step_angle = step_angle
         self.microsteps = microsteps
@@ -37,21 +36,20 @@ class A4988:
 
         if self.microsteps in self.step_modes:
             for pin, state in zip(self.ms_pins, self.step_modes[self.microsteps]):
-                pin.value = state
+                GPIO.output(pin, state)
 
     def set_direction(self, direction):
-        self.dir_pin.value = direction
+        GPIO.output(self.dir_pin, direction)
 
     def step(self):
-        self.step_pin.value = True
+        GPIO.output(self.step_pin, True)
         time.sleep(self.delay)
-        self.step_pin.value = False
+        GPIO.output(self.step_pin, False)
         time.sleep(self.delay)
 
     def move_steps(self, steps):
         direction = steps > 0
         steps = abs(int(steps))
-        #print("steps:", steps, "direction:", direction)
         
         self.set_direction(direction)
         for _ in range(steps):
@@ -63,9 +61,9 @@ class A4988:
 
 
 if __name__ == "__main__":
-    dir_pin = board.GP15
-    step_pin = board.GP14
-    ms_pins = [board.GP11, board.GP12, board.GP13]
+    dir_pin = 15
+    step_pin = 14
+    ms_pins = [11, 12, 13]
 
     driver = A4988(dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
 

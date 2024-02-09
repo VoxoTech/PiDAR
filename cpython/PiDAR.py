@@ -11,7 +11,7 @@ PWM_DC = 0.23                # duty cycle: 0.23 = 10 Hz, 0.1 = 4 Hz
 ANGLE_OFFSET = np.pi / 2    # = 90°
 FORMAT = 'npy'              # 'npy' or 'csv' or None
 DTYPE = np.float32
-DATA_DIR = "cpython/data"
+DATA_DIR = "data"
 VISUALIZATION = plot_2D()   # plot_2D() or None
 OUT_LEN = 40                # visualize after every nth batch
 

@@ -13,7 +13,7 @@ if platform == 'RaspberryPi':
             # disable OpenGL
             os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1'
 
-path = "cpython/data"
+path = "data"
 pointcloud = merge_data(path, angle_step=1, format='npy')
 
 pcd = plot_3D(pointcloud)

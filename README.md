@@ -1,10 +1,10 @@
 # PiDAR -- WORK IN PROGRESS!
-sophisticated 360° 3D Panorama Scanner: LDRobot LD06 LiDAR @ Raspberry Pi Pico | HQ Camera + M12 Fisheye Lens + Hugin @ Raspberry Pi 4 | Nema17 @ A4988
+sophisticated 360° 3D Panorama Scanner: LDRobot LD06 LiDAR + HQ Camera + M12 Fisheye Lens + Hugin @ Raspberry Pi 4 + Nema17 + A4988 driver
 
 
 
 ## core features:
-- optimized LD06 serial/UART driver (Python / CircuitPython)
+- optimized LD06 serial/UART driver
 - export 2D data (including luminance) as csv
 - cartesian 2D visualisation (matplotlib)
 - 3D conversion based on Z-rotation 
@@ -20,20 +20,11 @@ influenced by:
 LD06 port (left to right)
 - UART Tx, PWM, GND, 5V
 
-if directly attached to Raspberry Pi:
+Raspberry Pi:
 - LD06 UART0 Rx: GP15 (Pin10)
 - LD06 PWM0: GP18 (Pin12)
 - LD06 5V: Pin2 or Pin4
 - LD06 GND: e.g. Pin6 or Pin14
-
-if attached to Pico:
-- LD06 UART0 Rx: GP1 (Pin2)
-- LD06 PWM: GP2 (Pin4)
-- LD06 5V: VBUS (Pin40)
-- LD06 GND: e.g. Pin38
-- A4988 direction: GP15 (pin20)
-- A4988 step: GP14 (Pin19)
-- A4988 microstepping: GP11, GP12, GP13 (Pin 15,16,17)
 
 
 ### Serial Protocol
