@@ -5,9 +5,9 @@ import time
 import threading
 
 try:
-    from lib.open3d_utils import rotate_3D 
+    from lib.transformation import rotate_3D 
 except:
-    from open3d_utils import rotate_3D
+    from transformation import rotate_3D
 
 
 def save_data(data_dir, np_array, format='npy'):
@@ -80,5 +80,5 @@ def merge_data(path, angle_step=0, up_axis="Z", format='npy', delimiter=","):
 
 if __name__ == "__main__":
     # convert all npy to csv files
-    DATA_DIR = "cpython/data"
+    DATA_DIR = "data"
     convert_npy_to_csv(DATA_DIR)

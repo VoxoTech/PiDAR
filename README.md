@@ -1,5 +1,8 @@
 # PiDAR -- WORK IN PROGRESS!
-sophisticated 360° 3D Panorama Scanner: LDRobot LD06 LiDAR + HQ Camera + M12 Fisheye Lens + Hugin @ Raspberry Pi 4 + Nema17 + A4988 driver
+360° 3D Panorama Scanner: 
+- LDRobot LD06 LiDAR
+- HQ Camera with M12 Fisheye Lens Hugin
+- Raspberry Pi 4 + Nema17 + A4988 driver
 
 
 
@@ -10,9 +13,16 @@ sophisticated 360° 3D Panorama Scanner: LDRobot LD06 LiDAR + HQ Camera + M12 Fi
 - 3D conversion based on Z-rotation 
 - interactive 3D visualisation (Open3D)
 
-influenced by:
+inspired by:
 - [LIDAR_LD06_python_loder](https://github.com/henjin0/LIDAR_LD06_python_loder) and [Lidar_LD06_for_Arduino](https://github.com/henjin0/Lidar_LD06_for_Arduino) by Inoue Minoru ("[henjin0](https://github.com/henjin0)")
 - [ShaunPrice's](https://github.com/ShaunPrice/360-camera) StereoPi-supporting fork of [BrianBock's](https://github.com/BrianBock/360-camera) 360-camera script
+
+future reading:
+- when moving: [Doppler-ICP](https://github.com/aevainc/Doppler-ICP/blob/main/README.md)
+
+Open3D Demo Data for global registration, ICP, meshing etc.:
+- [BunnyMesh.ply](https://github.com/isl-org/open3d_downloads/releases/download/20220201-data/BunnyMesh.ply) from [20220201-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220201-data)
+- [DemoICPPointClouds.zip](https://github.com/isl-org/open3d_downloads/releases/download/20220301-data/DemoICPPointClouds.zip) from [20220301-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220301-data)
 
 
 ## wiring

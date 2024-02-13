@@ -1,5 +1,13 @@
+"""
+# check opengl version
+sudo apt-get install mesa-utils libgl1-mesa-dri
+glxinfo | grep "OpenGL version"
+>> OpenGL version string: 3.1 Mesa 23.2.1-1~bpo12+rpt2
+"""
+
 import open3d as o3d
 import copy
+import numpy as np
 
 try:
     from lib.transformation import transform
@@ -7,12 +15,7 @@ except:
     from transformation import transform
 
 
-def init_visualizer(width=1920, 
-                    height=1080, 
-                    left=0, 
-                    point_size=1.5, 
-                    unlit=False, 
-                    backface=True):
+def init_visualizer(width=1920, height=1080, left=0, point_size=1.5, unlit=False, backface=True):
     vis = o3d.visualization.Visualizer()
     vis.create_window(width=width, height=height, left=left)
 
@@ -21,7 +24,7 @@ def init_visualizer(width=1920,
     render_option.light_on = False if unlit else True
     render_option.mesh_show_back_face = backface
 
-    # TODO: view_control not working
+    # TODO: view_control not working!
     # view_control = vis.get_view_control()
     # view_control.set_zoom(0.4559)  # 0.2
     # view_control.set_front([0.6452, -0.3036, -0.7011])   # (0.0, 0.0, 0.01)
@@ -35,14 +38,7 @@ def update_visualizer(vis, object):
     vis.poll_events()
     vis.update_renderer()
 
-def visualize(object_list, 
-              transformation=None, 
-              width=1800, 
-              height=1000, 
-              left=0, 
-              point_size=1.5, 
-              uniform_colors=False, 
-              unlit=False):
+def visualize(object_list, transformation=None, width=1800, height=1000, left=0, point_size=1.5, uniform_colors=False, unlit=False):
     vis = init_visualizer(width=width, height=height, left=left, point_size=point_size, unlit=unlit)
 
     object_list = copy.deepcopy(object_list)

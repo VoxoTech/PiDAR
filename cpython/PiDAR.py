@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from lib.matplotlib_utils import plot_2D
+from lib.matplotlib_2D import plot_2D
 from lib.LD06_driver import LD06
 
 import subprocess

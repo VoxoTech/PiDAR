@@ -185,7 +185,7 @@ class LD06:
 
 
 if __name__ == "__main__":
-    from matplotlib_utils import plot_2D
+    from matplotlib_2D import plot_2D
 
     # CONSTANTS
     PORT = 'COM10'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 

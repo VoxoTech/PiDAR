@@ -6,11 +6,11 @@ __pycache__
 todo.md
 
 # work in progress
-mechanical_design/*
+/mechanical_design/*
 !mechanical_design/v1
 _old
 
 # data directory
-/data
-/images
-/cpython/experiments/test_data
+/data/*
+/images/*
+/export/*

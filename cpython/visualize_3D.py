@@ -3,30 +3,14 @@ import numpy as np
 import os
 
 from lib.file_utils import merge_data
-from lib.open3d_utils import plot_3D
-# from lib.matplotlib_utils import plot_3D
-
+from lib.pointcloud import pcd_from_np
+from lib.visualization import visualize
 from lib.platform_specific import get_platform
 
-platform = get_platform()
-if platform == 'RaspberryPi':
-            # disable OpenGL
-            os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1'
+
+os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1' if get_platform() == 'RaspberryPi' else '0'  # disable OpenGL
 
 path = "data"
-pointcloud = merge_data(path, angle_step=1, format='npy')
-
-pcd = plot_3D(pointcloud)
-
-
-pcd.estimate_normals()
-pcd.orient_normals_consistent_tangent_plane(100)
-
-print("run Poisson surface reconstruction")
-mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=9)
-o3d.visualization.draw_geometries([mesh])
-
-print("remove low density vertices")
-vertices_to_remove = densities < np.quantile(densities, 0.01)
-mesh.remove_vertices_by_mask(vertices_to_remove)
-o3d.visualization.draw_geometries([mesh])
+pointcloud = merge_data(path, angle_step=0.3, format='npy')
+pcd = pcd_from_np(pointcloud)
+visualize([pcd], unlit=True)

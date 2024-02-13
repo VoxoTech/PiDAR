@@ -32,10 +32,11 @@ p2p_max_iteration = 200
 
 verbose = False
 
-basedir = "cpython/experiments/test_data"
-path0 = os.path.join(basedir, "cloud_bin_0.pcd")
-path1 = os.path.join(basedir, "cloud_bin_1.pcd")
-path2 = os.path.join(basedir, "cloud_bin_2.pcd")
+
+# download demo data (cloud_bin_0.pcd, cloud_bin_1.pcd, cloud_bin_2.pcd)
+DemoICPPointClouds = o3d.data.DemoICPPointClouds()
+path0, path1, path2 = DemoICPPointClouds.paths
+
 
 # TODO: 0 <> 2 not working with P2L
 source = o3d.io.read_point_cloud(path2)
@@ -51,11 +52,8 @@ visualize([source_down, target_down], uniform_colors=True)
 # visualize_simple(source_down, target_down, np.identity(4))
 
 
-
 ########################################
-# GLOBAL REGISTRATION 
-########################################
-# FAST
+# FAST GLOBAL REGISTRATION 
 
 # start = time.time()
 # distance_threshold = voxel_size * 0.5
@@ -76,7 +74,7 @@ visualize([source_down, target_down], uniform_colors=True)
 
 
 # ########################################
-# RANSAC
+# RANSAC GLOBAL REGISTRATION 
 
 start = time.time()
 distance_threshold = voxel_size * 1.5
@@ -94,11 +92,8 @@ visualize([source, target], transformation=reg_ransac.transformation, uniform_co
 # visualize_simple(source_down, target_down, reg_ransac.transformation)
 
 
-
 ########################################
-# ICP REGISTRATION
-########################################
-# # P2P
+# # P2P ICP
 
 # start = time.time()
 # reg_p2p = ICP_registration(source, target, icp_threshold, 
@@ -108,15 +103,13 @@ visualize([source, target], transformation=reg_ransac.transformation, uniform_co
 # # print(reg_p2p)
 
 # visualize([source, target], transformation=reg_p2p.transformation, uniform_colors=True)
-# # visualize_simple(source, target, reg_p2p.transformation)
 
 
 # ########################################
-# P2L
+# P2L ICP
 
 start = time.time()
-reg_p2l = ICP_registration(source, target, icp_threshold, 
-                              reg_ransac.transformation, use_p2l=True)
+reg_p2l = ICP_registration(source, target, icp_threshold, reg_ransac.transformation, use_p2l=True)
 
 print(f"\nP2L ICP took {time.time() - start:.3f} sec.")
 # print(reg_p2l)
@@ -126,12 +119,8 @@ print(f"[P2L ICP] translate:\t{icp_translation}")
 print(f"[P2L ICP] rotate:\t{icp_euler}")
 
 visualize([source, target], transformation=reg_p2l.transformation, uniform_colors=True)
-# visualize_simple(source, target, reg_p2l.transformation)
-
 
 
 ########################################
 # EXPORT
-########################################
-
-export_pointcloud(source + target, os.path.join(basedir, "icp"), type="ply")
+export_pointcloud(source + target, "export/icp", type="ply")

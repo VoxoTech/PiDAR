@@ -6,12 +6,12 @@ import copy
 def set_verbosity():
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)  # .Debug
 
-def sample_poisson_disk(pcd, count=1000000):
-    return pcd.sample_points_poisson_disk(count)
+def __KD_search_param__(radius, max_nn):
+    return o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=max_nn)
 
 def estimate_point_normals(pcd, radius=0.1, max_nn=30):
-    search_param = o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=max_nn)
-    pcd.estimate_normals(search_param=search_param)
+    KD_search_param = __KD_search_param__(radius, max_nn)
+    pcd.estimate_normals(search_param=KD_search_param)
     return pcd
 
 def export_pointcloud(pcd, savepath, type="pcd", write_ascii=True, compressed=True):
@@ -25,34 +25,50 @@ def export_pointcloud(pcd, savepath, type="pcd", write_ascii=True, compressed=Tr
             array = np.asarray(pcd.points)
         np.savetxt(savepath+"."+type, array, delimiter=",")
 
-def fpfh_from_pointcloud(pcd, radius=5, max_nn=100):
+def fpfh_from_pointcloud(pcd, radius=0.25, max_nn=100):
     ''' Fast Point Feature Histograms (FPFH) descriptor'''
-    search_param = o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=max_nn)
-    return o3d.pipelines.registration.compute_fpfh_feature(pcd, search_param)
+    KD_search_param = __KD_search_param__(radius, max_nn)
+    return o3d.pipelines.registration.compute_fpfh_feature(pcd, KD_search_param)
 
-def preprocess_point_cloud(pcd, voxel_size=0):
-    # downsample
+def preprocess_point_cloud(pcd, voxel_size=0, compute_fpfh=True):
     if voxel_size > 0:
+        # downsample
         pcd_down = pcd.voxel_down_sample(voxel_size)
     else:
         pcd_down = copy.deepcopy(pcd)
-    
+        
     # estimate normals
     pcd_down = estimate_point_normals(pcd_down, radius=voxel_size*2, max_nn=30)
 
-    # compute FPFH feature
-    pcd_fpfh = fpfh_from_pointcloud(pcd_down, radius=voxel_size*5, max_nn=100)
+    if compute_fpfh:
+        # compute FPFH feature
+        pcd_fpfh = fpfh_from_pointcloud(pcd_down, radius=voxel_size*5, max_nn=100)
+        return pcd_down, pcd_fpfh
+    else:
+        return pcd_down
+
+def pcd_from_np(array):
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(array[:, 0:3])
     
-    return pcd_down, pcd_fpfh
+    if array.shape[1] == 4:
+        # normalize intensity values to [0, 1]
+        intensities = array[:, 3] / np.max(array[:, 3])
+
+        # map intensities to a grayscale color map
+        colors = np.column_stack([intensities, intensities, intensities])
+        pcd.colors = o3d.utility.Vector3dVector(colors)
+
+    return pcd
 
 
 if __name__ == "__main__":
     from visualization import visualize
-    from mesh import mesh_from_ball_pivoting, mesh_optimize
 
-    pcd = o3d.io.read_point_cloud("export/laser1a_720.pcd")
-    pcd_down = preprocess_point_cloud(pcd, voxel_size=0)  # if voxel_size > 0: return pcd_down, pcd_fpfh
+    # download demo data
+    DemoICPPointClouds = o3d.data.DemoICPPointClouds()
+    path0, path1, path2 = DemoICPPointClouds.paths
 
-    mesh = mesh_from_ball_pivoting(pcd)
-    mesh = mesh_optimize(mesh, count=1000000)
-    visualize([mesh])
+    pcd = o3d.io.read_point_cloud(path0)
+    pcd_down = preprocess_point_cloud(pcd, voxel_size=0, compute_fpfh=False)
+    visualize([pcd_down])
