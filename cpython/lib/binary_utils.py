@@ -20,4 +20,4 @@ if __name__ == '__main__':
     spaced_string = hexlify(byte_string, spaced=True)
     hex_list = spaced_string.split(' ')
 
-print(len(hex_list), hex_list)
+    print("len:", len(hex_list), "hex_list:", hex_list)
