@@ -7,7 +7,7 @@ from lib.LD06_driver import LD06
 # CONSTANTS
 # dmesg | grep "tty"
 PORT = '/dev/ttyS0'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyS0', 'Linux': '/dev/ttyUSB0'}
-PWM_DC = 0.23                # duty cycle: 0.23 = 10 Hz, 0.1 = 4 Hz
+PWM_DC = 0.1                # duty cycle: 0.23 = 10 Hz, 0.1 = 4 Hz
 ANGLE_OFFSET = np.pi / 2    # = 90°
 FORMAT = 'npy'              # 'npy' or 'csv' or None
 DTYPE = np.float32
