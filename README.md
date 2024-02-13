@@ -54,7 +54,7 @@ temporary solution:
 
     sudo chmod a+rw /dev/ttyS0
 
-permanent solution:
+permanent solution using a service: (NOT WORKING YET !!)
 
     sudo usermod -a -G dialout pi
     
@@ -73,6 +73,15 @@ permanent solution:
     sudo systemctl start ttyS0-permissions
     sudo systemctl status ttyS0-permissions
 
+permanent solution by disabling password for chmod and executing the temporary solution by script 
+    sudo visudo
+    pi ALL=(ALL:ALL) NOPASSWD: /usr/bin/chmod a+rw /dev/ttyS0
+
+    # and in python:
+    import subprocess
+    command = "sudo chmod a+rw /dev/ttyS0"
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
 
 ## Hardware PWM on Raspberry Pi
 enable GPIO_18 (PWM0) and GPIO_19 (PWM1)

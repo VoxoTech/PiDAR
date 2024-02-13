@@ -12,4 +12,5 @@ _old
 
 # data directory
 /data
+/images
 /cpython/experiments/test_data

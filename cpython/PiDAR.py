@@ -3,6 +3,13 @@ import os
 from lib.matplotlib_utils import plot_2D
 from lib.LD06_driver import LD06
 
+import subprocess
+
+# Use subprocess to allow serial communication on Raspberry Pi
+allow_serial = "sudo chmod a+rw /dev/ttyS0"
+process = subprocess.Popen(allow_serial.split(), stdout=subprocess.PIPE)
+output, error = process.communicate()
+
 
 # CONSTANTS
 # dmesg | grep "tty"
