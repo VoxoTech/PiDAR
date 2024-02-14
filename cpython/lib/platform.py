@@ -1,5 +1,6 @@
 import sys
 import os
+import subprocess
 
 
 def get_platform():
@@ -62,6 +63,16 @@ def init_pwm_Pi(pwm_channel=0):
 def init_pwm_MCU(pin="GP2"):
     from pwmio import PWMOut        # type: ignore
     return PWMOut(boardpin(pin), frequency=20000)
+
+def allow_serial():
+    if get_platform() == "RaspberryPi":
+        # Use subprocess to allow serial communication on Raspberry Pi
+        sudo_command = "sudo chmod a+rw /dev/ttyS0"
+        process = subprocess.Popen(sudo_command.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        return output, error
+    else:
+        print("[WARNING] plattform is no Pi.")
 
 
 if __name__ == "__main__":

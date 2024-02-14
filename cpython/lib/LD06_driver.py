@@ -11,11 +11,11 @@ import os
 
 try:
     # running from project root
-    from lib.platform_specific import *
+    from lib.platform import *
     from lib.file_utils import save_data
 except:
     # testing from this file
-    from platform_specific import *
+    from platform import *
     from file_utils import save_data
 
 

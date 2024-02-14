@@ -38,7 +38,7 @@ class A4988:
 
     def step(self):
         self.step_pin.on()
-        time.sleep(self.delay)
+        time.sleep(0.0001)
         self.step_pin.off()
         time.sleep(self.delay)
 
@@ -56,15 +56,15 @@ class A4988:
 
 
 if __name__ == "__main__":
-    dir_pin = 15
-    step_pin = 14
-    ms_pins = [11, 12, 13]
+    dir_pin = 26
+    step_pin = 19
+    ms_pins = [5, 6, 13]
 
-    driver = A4988(dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
+    driver = A4988(dir_pin, step_pin, ms_pins, delay=0.001, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
 
     while True:
         driver.move_angle(360)
         time.sleep(0.2)
         
-        driver.move_angle(-360)
-        time.sleep(0.2)
+        # driver.move_angle(-360)
+        # time.sleep(0.2)

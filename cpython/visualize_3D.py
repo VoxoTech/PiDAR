@@ -5,7 +5,7 @@ import os
 from lib.file_utils import merge_data
 from lib.pointcloud import pcd_from_np
 from lib.visualization import visualize
-from lib.platform_specific import get_platform
+from lib.platform import get_platform
 
 
 os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1' if get_platform() == 'RaspberryPi' else '0'  # disable OpenGL
