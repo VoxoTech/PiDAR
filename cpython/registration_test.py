@@ -7,14 +7,12 @@ https://www.open3d.org/docs/latest/tutorial/Basic/icp_registration.html
 """
 
 import open3d as o3d
-import numpy as np
 import time
-import os
 
 from lib.transformation import get_transform_vectors, transform
 from lib.pointcloud import set_verbosity, preprocess_point_cloud, export_pointcloud
 from lib.registration import global_registration, ICP_registration
-from lib.visualization import visualize  # visualize_simple
+from lib.visualization import visualize
 
 
 # # LINESCANNER GROUND-TRUTH
@@ -49,8 +47,6 @@ target_down, target_fpfh = preprocess_point_cloud(target, voxel_size)
 
 visualize([source, target], uniform_colors=True)
 visualize([source_down, target_down], uniform_colors=True)
-# visualize_simple(source, target, np.identity(4))
-# visualize_simple(source_down, target_down, np.identity(4))
 
 
 ########################################
@@ -63,15 +59,10 @@ visualize([source_down, target_down], uniform_colors=True)
 
 # print(f"FAST global registration took {time.time() - start:.3f} sec.")
 # # print(reg_fast)
-
 # visualize([source_down, target_down], transformation=reg_fast.transformation, uniform_colors=True)
-# # visualize_simple(source_down, target_down, reg_fast.transformation)
-
 
 # # print(evaluate_registration(source, target, icp_threshold, transform=reg_ransac.transformation))
-
 # visualize([source, target], transformation=reg_fast.transformation, uniform_colors=True)
-# # visualize_simple(source, target, reg_fast.transformation)
 
 
 # ########################################
@@ -90,7 +81,6 @@ print(f"[RANSAC] translate:\t{ransac_translation})")
 print(f"[RANSAC] rotate:\t{ransac_euler})")
 
 visualize([source, target], transformation=reg_ransac.transformation, uniform_colors=True)
-# visualize_simple(source_down, target_down, reg_ransac.transformation)
 
 
 ########################################
