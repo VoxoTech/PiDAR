@@ -44,6 +44,7 @@ def visualize(object_list, transformation=None, width=1800, height=1000, left=0,
     object_list = copy.deepcopy(object_list)
 
     if transformation is not None:
+        # np.identity(4)
         object_list[0] = transform(object_list[0], transformation=transformation)
 
     if uniform_colors:

@@ -7,8 +7,9 @@ https://www.open3d.org/docs/latest/tutorial/Basic/icp_registration.html
 """
 
 import open3d as o3d
-import os
+import numpy as np
 import time
+import os
 
 from lib.transformation import get_transform_vectors, transform
 from lib.pointcloud import set_verbosity, preprocess_point_cloud, export_pointcloud
@@ -122,5 +123,6 @@ visualize([source, target], transformation=reg_p2l.transformation, uniform_color
 
 
 ########################################
-# EXPORT
-export_pointcloud(source + target, "export/icp", type="ply")
+# EXPORT TRANSFORMED POINT CLOUDS
+transformed_source = transform(source, transformation=reg_p2l.transformation)
+export_pointcloud([transformed_source, target], "export/registration_test", type="e57")
