@@ -10,9 +10,11 @@ import RPi.GPIO as GPIO     # type: ignore
 import time
 
 class A4988:
-    def __init__(self, dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=1.0):
+    def __init__(self, dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=1.0, verbose=False):
+        # Disable warnings
+        GPIO.setwarnings(verbose) 
+
         GPIO.setmode(GPIO.BCM)
-        # GPIO.setwarnings(False)  # Disable warnings
         
         self.dir_pin = dir_pin
         GPIO.setup(self.dir_pin, GPIO.OUT)
@@ -33,7 +35,7 @@ class A4988:
                            2: [True, False, False],
                            4: [False, True, False],
                            8: [True, True, False],
-                           16: [True, True, True]}
+                           16:[True, True, True]}
 
         if self.microsteps in self.step_modes:
             for pin, state in zip(self.ms_pins, self.step_modes[self.microsteps]):
@@ -41,6 +43,9 @@ class A4988:
 
     def set_direction(self, direction):
         GPIO.output(self.dir_pin, direction)
+
+    def get_steps_for_angle(self, angle):
+        return int((angle / self.step_angle) * self.microsteps * self.gear_ratio)
 
     def step(self):
         GPIO.output(self.step_pin, True)
@@ -57,10 +62,11 @@ class A4988:
             self.step()
 
     def move_angle(self, angle):
-        steps = int((angle / self.step_angle) * self.microsteps * self.gear_ratio)
+        steps = self.get_steps_for_angle(angle)
         self.move_steps(steps)
+        return steps
     
-    def cleanup(self):
+    def close(self):
         GPIO.cleanup(self.ms_pins)
         GPIO.cleanup(self.dir_pin)
         GPIO.cleanup(self.step_pin)
@@ -71,15 +77,16 @@ if __name__ == "__main__":
     step_pin = 19
     ms_pins = [5, 6, 13]
 
-    driver = A4988(dir_pin, step_pin, ms_pins, delay=0.0005, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
+    stepper = A4988(dir_pin, step_pin, ms_pins, delay=0.0005, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
 
     try:
         while True:
-            driver.move_angle(45)
+            steps = stepper.move_angle(45)
             time.sleep(0.2)
             
-            # driver.move_angle(-360)
+            # stepper.move_angle(-45)
             # time.sleep(0.2)
 
     finally:
-        driver.cleanup()
+        print("Steps:", steps)
+        stepper.close()

@@ -12,6 +12,7 @@
 - cartesian 2D visualisation (matplotlib)
 - 3D conversion based on Z-rotation 
 - interactive 3D visualisation (Open3D)
+- export 3D data as [e57](https://github.com/davidcaron/pye57), pcd or ply
 
 inspired by:
 - [LIDAR_LD06_python_loder](https://github.com/henjin0/LIDAR_LD06_python_loder) and [Lidar_LD06_for_Arduino](https://github.com/henjin0/Lidar_LD06_for_Arduino) by Inoue Minoru ("[henjin0](https://github.com/henjin0)")

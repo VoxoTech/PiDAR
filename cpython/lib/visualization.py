@@ -17,9 +17,13 @@ except:
     from platform_utils import get_platform
 
 
-def opengl_fallback():
+def opengl_fallback(check=True):
     # disable OpenGL on Raspberry Pi
-    os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1' if get_platform() == 'RaspberryPi' else '0'
+    if not check or get_platform() == 'RaspberryPi':
+        use_software_rendering = '1'
+    else:
+        use_software_rendering = '0'
+    os.environ['LIBGL_ALWAYS_SOFTWARE'] = use_software_rendering
 
 
 def init_visualizer(title="PiDAR", width=1920, height=1080, left=0, point_size=1.5, unlit=False, backface=True):

@@ -11,16 +11,16 @@ import os
 
 try:
     # running from project root
-    from lib.platform_utils import *
+    from lib.platform_utils import get_platform, init_serial, init_serial_MCU, init_pwm_Pi, init_pwm_MCU
     from lib.file_utils import save_data
 except:
     # testing from this file
-    from platform_utils import *
+    from platform_utils import get_platform, init_serial, init_serial_MCU, init_pwm_Pi, init_pwm_MCU
     from file_utils import save_data
 
 
 class LD06:
-    def __init__(self, port=None, pwm_dc=0.4, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
+    def __init__(self, port=None, pwm_channel=0, pwm_dc=0.4, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
         self.platform           = get_platform()
 
         # constants
@@ -70,13 +70,13 @@ class LD06:
             pwm.duty_cycle = int(self.pwm_dc * 65534)
         
         elif self.platform == 'RaspberryPi':
-            pwm_channel = 0
             pwm = init_pwm_Pi(pwm_channel)
             pwm.start(int(self.pwm_dc * 100))
             # pwm.change_duty_cycle(50)            
 
             # disable OpenGL
-            os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1'
+            os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1'  # opengl_fallback(check=False)
+            
     
 
     def close(self):
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     ANGLE_OFFSET = np.pi / 2    # = 90°
     FORMAT = 'npy'              # 'npy' or 'csv' or None
     DTYPE = np.float32
-    DATA_DIR = "cpython/data"
+    DATA_DIR = "data"
     VISUALIZATION = plot_2D()   # plot_2D() or None
     OUT_LEN = 40                # visualize after every nth batch
 
