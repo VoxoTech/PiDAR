@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from lib.platform import allow_serial
+from cpython.lib.platform_utils import allow_serial
 from lib.matplotlib_2D import plot_2D
 from lib.LD06_driver import LD06
 

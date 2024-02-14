@@ -7,17 +7,24 @@ glxinfo | grep "OpenGL version"
 
 import open3d as o3d
 import copy
-import numpy as np
+import os
 
 try:
     from lib.transformation import transform
+    from lib.platform_utils import get_platform
 except:
     from transformation import transform
+    from platform_utils import get_platform
 
 
-def init_visualizer(width=1920, height=1080, left=0, point_size=1.5, unlit=False, backface=True):
+def opengl_fallback():
+    # disable OpenGL on Raspberry Pi
+    os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1' if get_platform() == 'RaspberryPi' else '0'
+
+
+def init_visualizer(title="PiDAR", width=1920, height=1080, left=0, point_size=1.5, unlit=False, backface=True):
     vis = o3d.visualization.Visualizer()
-    vis.create_window(width=width, height=height, left=left)
+    vis.create_window(width=width, height=height, left=left, window_name=title)
 
     render_option = vis.get_render_option()
     render_option.point_size = point_size
@@ -38,8 +45,8 @@ def update_visualizer(vis, object):
     vis.poll_events()
     vis.update_renderer()
 
-def visualize(object_list, transformation=None, width=1800, height=1000, left=0, point_size=1.5, uniform_colors=False, unlit=False):
-    vis = init_visualizer(width=width, height=height, left=left, point_size=point_size, unlit=unlit)
+def visualize(object_list, title="PiDAR", transformation=None, width=1800, height=1000, left=0, point_size=1.5, uniform_colors=False, unlit=False):
+    vis = init_visualizer(title=title, width=width, height=height, left=left, point_size=point_size, unlit=unlit)
 
     object_list = copy.deepcopy(object_list)
 

@@ -57,7 +57,7 @@ def init_serial_MCU(pin='GP1'):
 
 def init_pwm_Pi(pwm_channel=0):
     '''pwm_channel 0: GP18, pwm_channel 1: GP19'''
-    from rpi_hardware_pwm import HardwarePWM
+    from rpi_hardware_pwm import HardwarePWM   # type: ignore
     return HardwarePWM(pwm_channel=pwm_channel, hz=20000, chip=0)
 
 def init_pwm_MCU(pin="GP2"):

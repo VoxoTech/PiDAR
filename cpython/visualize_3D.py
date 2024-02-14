@@ -1,14 +1,9 @@
-import open3d as o3d
-import numpy as np
-import os
-
 from lib.file_utils import merge_data
 from lib.pointcloud import pcd_from_np
-from lib.visualization import visualize
-from lib.platform import get_platform
+from lib.visualization import opengl_fallback, visualize
 
 
-os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1' if get_platform() == 'RaspberryPi' else '0'  # disable OpenGL
+opengl_fallback()
 
 path = "data"
 pointcloud = merge_data(path, angle_step=0.3, format='npy')
