@@ -6,8 +6,9 @@ open3d>=0.18.0
 
 rpi-hardware-pwm
 RPi.GPIO
-
 # gpiozero
+
+pye57
 
 # adafruit_board_toolkit
 # aioconsole

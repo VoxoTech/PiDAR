@@ -1,5 +1,6 @@
 import numpy as np
 import open3d as o3d
+import pye57
 import copy
 
 
@@ -24,6 +25,27 @@ def export_pointcloud(pcd, savepath, type="pcd", write_ascii=True, compressed=Tr
         if not isinstance(pcd, np.ndarray):
             array = np.asarray(pcd.points)
         np.savetxt(savepath+"."+type, array, delimiter=",")
+
+    elif type == "e57":
+        # Convert open3d point cloud to numpy array
+        points = np.asarray(pcd.points)
+        colors = np.asarray(pcd.colors) * 255
+
+        # Create a dictionary with keys for each coordinate and color
+        data_raw = {
+            "cartesianX": points[:, 0],
+            "cartesianY": points[:, 1],
+            "cartesianZ": points[:, 2],
+            "colorRed":   colors[:, 0],
+            "colorGreen": colors[:, 1],
+            "colorBlue":  colors[:, 2]}
+
+        # Create an E57 object with write mode
+        e57 = pye57.E57(savepath+"."+type, mode='w')
+
+        # Write the data to the E57 file
+        e57.write_scan_raw(data_raw)
+        e57.close()
 
 def fpfh_from_pointcloud(pcd, radius=0.25, max_nn=100):
     ''' Fast Point Feature Histograms (FPFH) descriptor'''
