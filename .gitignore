@@ -1,6 +1,8 @@
 # temps
 .vscode
 __pycache__
+/panocam/tmp/*
+Thumbs.db
 
 # private
 todo.md
@@ -11,6 +13,7 @@ todo.md
 _old
 
 # data directory
+
+/panocam/images/*
 /data/*
-/images/*
 /export/*

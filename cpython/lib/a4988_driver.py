@@ -12,6 +12,7 @@ import time
 class A4988:
     def __init__(self, dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=1.0):
         GPIO.setmode(GPIO.BCM)
+        # GPIO.setwarnings(False)  # Disable warnings
         
         self.dir_pin = dir_pin
         GPIO.setup(self.dir_pin, GPIO.OUT)
@@ -48,7 +49,7 @@ class A4988:
         time.sleep(self.delay)
 
     def move_steps(self, steps):
-        direction = steps > 0
+        direction = steps < 0   # < clockwise positive
         steps = abs(int(steps))
         
         self.set_direction(direction)
@@ -58,6 +59,11 @@ class A4988:
     def move_angle(self, angle):
         steps = int((angle / self.step_angle) * self.microsteps * self.gear_ratio)
         self.move_steps(steps)
+    
+    def cleanup(self):
+        GPIO.cleanup(self.ms_pins)
+        GPIO.cleanup(self.dir_pin)
+        GPIO.cleanup(self.step_pin)
 
 
 if __name__ == "__main__":
@@ -67,9 +73,13 @@ if __name__ == "__main__":
 
     driver = A4988(dir_pin, step_pin, ms_pins, delay=0.0005, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
 
-    while True:
-        driver.move_angle(360)
-        time.sleep(0.2)
-        
-        # driver.move_angle(-360)
-        # time.sleep(0.2)
+    try:
+        while True:
+            driver.move_angle(45)
+            time.sleep(0.2)
+            
+            # driver.move_angle(-360)
+            # time.sleep(0.2)
+
+    finally:
+        driver.cleanup()
