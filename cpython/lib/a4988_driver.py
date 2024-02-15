@@ -85,7 +85,7 @@ if __name__ == "__main__":
     stepper = A4988(dir_pin, step_pin, ms_pins, delay=0.0005, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
 
     try:
-        for z_angle in np.arange(0, 360, HORIZONTAL_RESOLUTION):
+        for z_angle in np.arange(0, 180, HORIZONTAL_RESOLUTION):
             steps = stepper.move_angle(HORIZONTAL_RESOLUTION)
             time.sleep(SCAN_DURATION)
 
