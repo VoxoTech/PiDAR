@@ -20,13 +20,9 @@ import shutil
 import glob
 
 
-def stitch_pano(image_dir, output_path=None):
-    base_dir = os.path.dirname(image_dir)
-    print("basedir:", base_dir)
-    tmp_dir = os.path.join(base_dir, "tmp")
-
-    if output_path is None:
-        output_path = os.path.join(base_dir, "pano")
+def stitch_pano(image_dir, output_path="export/pano.jpg"):
+    template_path = "panocam/template_8.pto"
+    tmp_dir = "panocam/tmp"
 
     # Get all jpg files in the directory
     files = sorted(glob.glob(os.path.join(image_dir, '*.jpg')))
@@ -37,8 +33,9 @@ def stitch_pano(image_dir, output_path=None):
     # generate a project from template and execute stitching
 
     # create Hugin project, match to template, and stitch
-    calls = [['pto_gen', '--projection=2', '--fov=360', '-o', f'./{tmp_dir}/project.pto', files[0], files[1]],  
-             ['pto_template', f'--output=./{tmp_dir}/project.pto', f'--template={base_dir}/template.pto', f'./{tmp_dir}/project.pto'],
+    calls = [['pto_gen', '--projection=2', '--fov=360', '-o', f'./{tmp_dir}/project.pto', 
+              files[0], files[1], files[2], files[3], files[4], files[5], files[6], files[7]],  # template_8.pto
+             ['pto_template', f'--output=./{tmp_dir}/project.pto', f'--template={template_path}', f'./{tmp_dir}/project.pto'],
              ['hugin_executor', '--stitching', f'--prefix={output_path}', f'./{tmp_dir}/project.pto']]
     for call in calls:
         subprocess.run(call)
@@ -48,4 +45,4 @@ def stitch_pano(image_dir, output_path=None):
 
 
 if __name__ == "__main__":
-    stitch_pano("panocam/images", output_path="export/pano")
+    stitch_pano("panocam/images", output_path="export/pano.jpg")
