@@ -73,20 +73,22 @@ class A4988:
 
 
 if __name__ == "__main__":
+    import numpy as np
+
     dir_pin = 26
     step_pin = 19
     ms_pins = [5, 6, 13]
 
+    HORIZONTAL_RESOLUTION = 0.5  # 0.5° horizontally
+    SCAN_DURATION = 0.16         # 0.5° vertically -> 1 / (4500 samples per second / 720 samples per rotation = 6.25 rps)
+
     stepper = A4988(dir_pin, step_pin, ms_pins, delay=0.0005, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
 
     try:
-        while True:
-            steps = stepper.move_angle(45)
-            time.sleep(0.2)
-            
-            # stepper.move_angle(-45)
-            # time.sleep(0.2)
+        for z_angle in np.arange(0, 360, HORIZONTAL_RESOLUTION):
+            steps = stepper.move_angle(HORIZONTAL_RESOLUTION)
+            time.sleep(SCAN_DURATION)
 
     finally:
-        print("Steps:", steps)
+        # print("Steps:", steps)
         stepper.close()

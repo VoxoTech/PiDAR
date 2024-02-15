@@ -25,13 +25,13 @@ DIR_PIN = 26                # direction pin
 STEP_PIN = 19               # step pin
 MS_PINS = [5, 6, 13]        # microstepping mode pins
 
-STEP_DELAY = 0.0005         # seconds between steps
+STEP_DELAY = 0.001         # seconds between steps
 STEP_ANGLE = 1.8            # degrees per full step
 MICROSTEPS = 16             # microsteps per full step
 GEAR_RATIO = 3.7142857      # planetary gear reduction ratio
 
-HORIZONTAL_RESOLUTION = 0.25  # degrees
-
+HORIZONTAL_ANGLE = 0.4846444  # degrees
+HORIZONTAL_STEPS = 16
 
 # ensure output directory
 if not os.path.exists(DATA_DIR):
@@ -42,14 +42,14 @@ lidar   = LD06(port=PORT, pwm_dc = PWM_DC, visualization=VIS, offset=OFFSET,form
 stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_ANGLE, microsteps=MICROSTEPS, gear_ratio=GEAR_RATIO)
 
 
-# calculate exact amount of steps for the desired angle
-steps = stepper.move_angle(HORIZONTAL_RESOLUTION)
-print(f"[INFO] {HORIZONTAL_RESOLUTION}° -> {steps} steps.")
+## calculate exact amount of steps for the desired angle
+#steps = stepper.move_angle(HORIZONTAL_ANGLE)
+#print(f"[INFO] {HORIZONTAL_ANGLE}° -> {steps} steps.")
 
 
 
 try:
-    for z_angle in range(0, 360, HORIZONTAL_RESOLUTION):
+    for z_angle in np.arange(0, 360, HORIZONTAL_ANGLE):
         if lidar.serial_connection.is_open:
             # lidar.read_loop()  
         
@@ -68,7 +68,7 @@ try:
             lidar.read()
             lidar.out_i += 1
 
-            stepper.move_steps(steps)
+            stepper.move_steps(HORIZONTAL_STEPS)
 
 finally:
     lidar.close()

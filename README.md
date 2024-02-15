@@ -118,12 +118,12 @@ https://wiki.ubuntuusers.de/Howto/TigerVNC/
     sudo apt install tigervnc-standalone-server
     sudo nano /etc/tigervnc/vncserver-config-mandatory
 
-$localhost = "no";
+    $localhost = "no";
 
     sudo tigervncpasswd
     sudo nano /etc/tigervnc/vncserver.users
 
-1:=pi
+    1:=pi
 
     sudo systemctl enable tigervncserver@:1.service  
     sudo systemctl start tigervncserver@:1.service
@@ -132,9 +132,15 @@ if necessary, define resolution and framerate:
 
     echo "video=HDMI-A-1:1920x1080@60D" >> /boot/config.txt 
 
+
 ### poor performance of VS Code on Raspberry Pi
 disable hardware acceleration for VS Code ([source](https://code.visualstudio.com/docs/setup/raspberry-pi))
 
-> Preferences: Configure Runtime Arguments  
-Set "disable-hardware-acceleration": true
+    Preferences: Configure Runtime Arguments  
+    Set "disable-hardware-acceleration": true
 
+### pye57 on Raspberry Pi
+there is no wheel for arm64. build requires libxerces:
+
+    sudo apt install libxerces-c-dev
+    pip install pye57
