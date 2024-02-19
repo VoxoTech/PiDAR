@@ -1,11 +1,14 @@
 # PiDAR -- WORK IN PROGRESS!
-360° 3D Panorama Scanner: 
+
+## 360° 3D Panorama Scanner: 
 - LDRobot LD06 LiDAR
 - HQ Camera with M12 Fisheye Lens Hugin
 - Raspberry Pi 4
 - Nema17 stepper with A4988 driver
 
+Version 1:
 
+<img src="docs/pidar_covershot.jpg" alt="breadboard" width="800"/>
 
 ## core features:
 - optimized LD06 serial/UART driver
@@ -31,8 +34,12 @@ Open3D Demo Data for global registration, ICP, meshing etc.:
 
 ## wiring
 
+Version 2 - now using 10mAh Powerbank with Step-Up converter and Relay for better power efficiency
+
+<img src="docs/pidar_breadboard.jpg" alt="breadboard version 2" width="600"/>
+
 LD06 port (left to right)
-- UART Tx, PWM, GND, 5V
+- UART Tx (yellow), PWM (white), GND (black), VCC 5V (red)
 
 Raspberry Pi:
 - LD06 UART0 Rx: GP15 (Pin10)
@@ -40,8 +47,21 @@ Raspberry Pi:
 - LD06 5V: Pin2 or Pin4
 - LD06 GND: e.g. Pin6 or Pin14
 
+### Power Button (Wake up & Shut Down)
 
-### Serial Protocol
+- Button at GPIO 3
+- install [shutdown script](https://github.com/Howchoo/pi-power-button)
+
+### Power LED and CPU fan
+    sudo nano /boot/firmware/config.txt
+
+    # CPU fan at lower temp
+    dtoverlay=gpio-fan,gpiopin=4,temp=45000
+
+    # Power LED Heartbeat:
+    dtparam=pwr_led_trigger=timer
+
+## Serial Protocol
 baudrate 230400, data bits 8, no parity, 1 stopbit  
 sampling frequency 4500, scan frequency 5-13 Hz, distance 2cm - 12 meter, ambient light 30 kLux
 
@@ -107,6 +127,8 @@ the stitching script is inspired by [StereoPi](https://medium.com/stereopi/stitc
 - [mechanical Datasheet](https://www.inno-maker.com/wp-content/uploads/2020/11/LDROBOT_LD06_Datasheet.pdf)
 - [Protocol Description](https://storage.googleapis.com/mauser-public-images/prod_description_document/2021/315/8fcea7f5d479f4f4b71316d80b77ff45_096-6212_a.pdf)
 - another potentially interesting implementation: [pyLIDAR](https://github.com/Paradoxdruid/pyLIDAR)
+
+
 
 
 ## Troubleshooting
