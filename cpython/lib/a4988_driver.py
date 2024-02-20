@@ -80,16 +80,38 @@ if __name__ == "__main__":
     step_pin = 19
     ms_pins = [5, 6, 13]
 
-    HORIZONTAL_RESOLUTION = 0.5  # 0.5° horizontally
-    SCAN_DURATION = 0.16         # 0.5° vertically -> 1 / (4500 samples per second / 720 samples per rotation = 6.25 rps)
+    ms = 16                                     # microstepping mode
+    ms_table = {16: 11885, 8: 5942, 4: 2971}    # table of microsteps per revolution
+    ms360 = ms_table[ms]                        # microsteps per revolution
 
-    stepper = A4988(dir_pin, step_pin, ms_pins, delay=0.0005, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
+    target_res = 0.5                            # desired resolution in degrees
+    delay = 0.0005
+    gear_ratio = 3.7142857
+    stepper_resolution = 200
+    step_angle = 360 / stepper_resolution       # 1.8
+
+    # initialize stepper
+    stepper = A4988(dir_pin, step_pin, ms_pins, delay=delay, step_angle=step_angle, microsteps=ms, gear_ratio=gear_ratio)
+
+    steps = int(ms360 * target_res / 360)       # 16
+    h_res = 360 * ms / ms360                    # 0.48464451
+    scan_delay = 1 / (4500 * target_res / 360)  # 0.16
+
+    # stepper.move_steps(11885)                   # 360°
 
     try:
-        for z_angle in np.arange(0, 180, HORIZONTAL_RESOLUTION):
-            steps = stepper.move_angle(HORIZONTAL_RESOLUTION)
-            time.sleep(SCAN_DURATION)
+        # 0-180° scanning
+        for z_angle in np.arange(0, 180, h_res):
+            stepper.move_steps(steps)
+            time.sleep(scan_delay)              # duration of one lidar duration
+        stepper.move_steps(steps)               # n+1 step
+
+        time.sleep(1)
+
+        # 180-360° only shooting photos
+        for i in range(5):
+            stepper.move_angle(45)
+            time.sleep(1)                       # delay for photo
 
     finally:
-        # print("Steps:", steps)
         stepper.close()

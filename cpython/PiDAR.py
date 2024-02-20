@@ -58,8 +58,9 @@ stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_AN
 
 
 
-while True:
-    try:
+
+try:
+    while True:
         # SCAN-Button pressed
         if not GPIO.input(4):
             # Relay Power on
@@ -90,10 +91,10 @@ while True:
             # GPIO.output(24, 0)  # Relay Power of
             sleep(0.1)
 
-    finally:
-        print("SCANNING STOPPED")
-        GPIO.output(24, 0)
-        GPIO.cleanup()
+finally:
+    print("SCANNING STOPPED")
+    GPIO.output(24, 0)
+    GPIO.cleanup()
 
-        lidar.close()
-        stepper.close()
+    lidar.close()
+    stepper.close()
