@@ -4,7 +4,7 @@ from time import sleep
 
 from lib.platform_utils import allow_serial
 from lib.matplotlib_2D import plot_2D
-from lib.LD06_driver import LD06
+from lib.lidar_driver import LD06  #, STL27L
 from lib.a4988_driver import A4988
 from lib.file_utils import save_data, make_dir
 

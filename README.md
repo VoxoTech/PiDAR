@@ -62,8 +62,8 @@ Raspberry Pi:
     dtparam=pwr_led_trigger=timer
 
 ## Serial Protocol
-baudrate 230400, data bits 8, no parity, 1 stopbit  
-sampling frequency 4500, scan frequency 5-13 Hz, distance 2cm - 12 meter, ambient light 30 kLux
+LD06: baudrate 230400, data bits 8, no parity, 1 stopbit  
+sampling frequency 4500 Hz, scan frequency 5-13 Hz, distance 2cm - 12 meter, ambient light 30 kLux
 
 total package size: 48 Byte, big endian.
 - starting character：Length 1 Byte, fixed value 0x54, means the beginning of data packet;
@@ -82,6 +82,7 @@ The calculation method of the angle is as following:
     angle = start_angle + step*i  
 
 len is the length of the packet, and the i value range is [0, len].
+
 
 ## Permission for Serial Access on Raspberry Pi
 temporary solution: 
@@ -122,13 +123,22 @@ install Hugin with enblend plugin
 the stitching script is inspired by [StereoPi](https://medium.com/stereopi/stitching-360-panorama-with-raspberry-pi-cm3-stereopi-and-two-fisheye-cameras-step-by-step-guide-aeca3ff35871).
 
 
-## LDRobot LD06 Lidar
+## LDRobot Lidar unit
+
+LD06: 
+- sampling frequency 4500 Hz
+- baudrate 230400
 - [Sales page](https://www.inno-maker.com/product/lidar-ld06/)
 - [mechanical Datasheet](https://www.inno-maker.com/wp-content/uploads/2020/11/LDROBOT_LD06_Datasheet.pdf)
 - [Protocol Description](https://storage.googleapis.com/mauser-public-images/prod_description_document/2021/315/8fcea7f5d479f4f4b71316d80b77ff45_096-6212_a.pdf)
 - another potentially interesting implementation: [pyLIDAR](https://github.com/Paradoxdruid/pyLIDAR)
 
-
+STL27L:
+- sampling frequency 21600 Hz
+- baudrate 921600
+- [datasheet](https://github.com/May-DFRobot/DFRobot/blob/master/SEN0589_Datasheet.pdf)
+- [wiki](https://www.waveshare.com/wiki/DTOF_LIDAR_STL27L)
+- ROS2 driver [git](https://github.com/ldrobotSensorTeam/ldlidar_stl_ros2?tab=readme-ov-file#Instructions)
 
 
 ## Troubleshooting

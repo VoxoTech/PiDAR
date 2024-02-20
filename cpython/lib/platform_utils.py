@@ -45,24 +45,24 @@ def boardpin(pin):
     board = sys.modules['board']
     return getattr(board, pin)
 
-def init_serial(port='/dev/ttyUSB0'):
+def init_serial(port='/dev/ttyUSB0', baudrate=230400):
     ''' USB: "/dev/ttyUSB0"  GPIO: "/dev/ttyS0" '''
     import serial
-    return serial.Serial(port=port, baudrate=230400, timeout=1.0, bytesize=8, parity='N', stopbits=1)
+    return serial.Serial(port=port, baudrate=baudrate, timeout=1.0, bytesize=8, parity='N', stopbits=1)
 
-def init_serial_MCU(pin='GP1'):
+def init_serial_MCU(pin='GP1', baudrate=230400):
     from busio import UART          # type: ignore
-    return UART(None, boardpin(pin), baudrate=230400, bits=8, parity=None, stop=1)
+    return UART(None, boardpin(pin), baudrate=baudrate, bits=8, parity=None, stop=1)
     
 
-def init_pwm_Pi(pwm_channel=0):
+def init_pwm_Pi(pwm_channel=0, frequency=30000):
     '''pwm_channel 0: GP18, pwm_channel 1: GP19'''
     from rpi_hardware_pwm import HardwarePWM   # type: ignore
-    return HardwarePWM(pwm_channel=pwm_channel, hz=20000, chip=0)
+    return HardwarePWM(pwm_channel=pwm_channel, hz=frequency, chip=0)
 
-def init_pwm_MCU(pin="GP2"):
+def init_pwm_MCU(pin="GP2", frequency=30000):
     from pwmio import PWMOut        # type: ignore
-    return PWMOut(boardpin(pin), frequency=20000)
+    return PWMOut(boardpin(pin), frequency=frequency)
 
 def allow_serial():
     if get_platform() == "RaspberryPi":

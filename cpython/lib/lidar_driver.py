@@ -20,7 +20,7 @@ except:
 
 
 class LD06:
-    def __init__(self, port=None, pwm_channel=0, pwm_dc=0.4, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
+    def __init__(self, port=None, pwm_channel=0, pwm_dc=0.4, baudrate=230400, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
         self.platform           = get_platform()
 
         # constants
@@ -34,15 +34,15 @@ class LD06:
         # serial
         self.port               = port
         if self.platform in ['Pico', 'Pico W', 'Metro M7']:
-            self.serial_connection  = init_serial_MCU(pin=self.port)
+            self.serial_connection  = init_serial_MCU(pin=self.port, baudrate=baudrate)
         else:  # self.platform in ['Windows', 'Linux', 'RaspberryPi']:
-            self.serial_connection  = init_serial(port=self.port)
+            self.serial_connection  = init_serial(port=self.port, baudrate=baudrate)
         
         self.byte_array         = bytearray()
         self.flag_2c            = False
         self.dtype              = dtype
 
-        self.out_len           = out_len
+        self.out_len            = out_len
         # preallocate batch:
         self.timestamp          = 0
         self.speed              = 0
@@ -60,17 +60,18 @@ class LD06:
         self.format             = format
         self.visualization      = visualization
 
-        self.pwm = None
-        self.pwm_dc = pwm_dc
-        
+        self.pwm                = None
+        self.pwm_dc             = pwm_dc
+        self.pwm_frequency      = 30000  # 30 kHz
+
         # platform-specific
         if self.platform in ['Pico', 'Pico W', 'Metro M7']:
-            pwm_pin = "GP2"
-            pwm = init_pwm_MCU(pwm_pin)
-            pwm.duty_cycle = int(self.pwm_dc * 65534)
+            pwm_pin             = "GP2"
+            pwm                 = init_pwm_MCU(pwm_pin, frequency=self.pwm_frequency)
+            pwm.duty_cycle      = int(self.pwm_dc * 65534)
         
         elif self.platform == 'RaspberryPi':
-            pwm = init_pwm_Pi(pwm_channel)
+            pwm                 = init_pwm_Pi(pwm_channel, frequency=self.pwm_frequency)
             pwm.start(int(self.pwm_dc * 100))
             # pwm.change_duty_cycle(50)            
 
@@ -78,7 +79,6 @@ class LD06:
             os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1'  # opengl_fallback(check=False)
             
     
-
     def close(self):
         if self.pwm is not None:
             self.pwm.stop()
@@ -184,6 +184,14 @@ class LD06:
 
 
 
+class STL27L(LD06):
+    def __init__(self, port=None, pwm_channel=0, pwm_dc=0.4, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
+        # call the __init__ method of the parent class with the new baudrate and sampling rate
+        super().__init__(port, pwm_channel, pwm_dc, 921600, offset, data_dir, out_len, format, visualization, dtype)
+        self.sampling_rate = 21600  # new sampling rate for STL27L
+
+
+
 if __name__ == "__main__":
     from matplotlib_2D import plot_2D
 
@@ -191,7 +199,7 @@ if __name__ == "__main__":
     PORT = 'COM10'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
     ANGLE_OFFSET = np.pi / 2    # = 90°
     FORMAT = 'npy'              # 'npy' or 'csv' or None
-    DTYPE = np.float32
+    DTYPE = np.float64
     DATA_DIR = "data"
     VISUALIZATION = plot_2D()   # plot_2D() or None
     OUT_LEN = 40                # visualize after every nth batch
