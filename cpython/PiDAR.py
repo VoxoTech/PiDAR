@@ -1,5 +1,5 @@
 import numpy as np
-import RPi.GPIO as GPIO  
+import RPi.GPIO as GPIO  # type: ignore
 from time import sleep
 
 from lib.platform_utils import allow_serial
@@ -58,8 +58,8 @@ stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_AN
 
 
 
-try:
-    while True:
+while True:
+    try:
         # SCAN-Button pressed
         if not GPIO.input(4):
             # Relay Power on
@@ -90,10 +90,10 @@ try:
             # GPIO.output(24, 0)  # Relay Power of
             sleep(0.1)
 
-finally:
-    print("SCANNING STOPPED")
-    GPIO.output(24, 0)
-    GPIO.cleanup()
+    finally:
+        print("SCANNING STOPPED")
+        GPIO.output(24, 0)
+        GPIO.cleanup()
 
-    lidar.close()
-    stepper.close()
+        lidar.close()
+        stepper.close()

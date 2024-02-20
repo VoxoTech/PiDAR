@@ -67,6 +67,7 @@ class A4988:
         return steps
     
     def close(self):
+        GPIO.setmode(GPIO.BCM)  # necessary to avoid "RuntimeError: Please set pin numbering mode" ?
         GPIO.cleanup(self.ms_pins)
         GPIO.cleanup(self.dir_pin)
         GPIO.cleanup(self.step_pin)

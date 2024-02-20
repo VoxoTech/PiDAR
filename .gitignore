@@ -10,10 +10,11 @@ todo.md
 # work in progress
 /mechanical_design/*
 !mechanical_design/v1
+!mechanical_design/Fritzing
+/mechanical_design/Fritzing/parts
 _old
 
 # data directory
-
 /panocam/images/*
 /data/*
 /export/*

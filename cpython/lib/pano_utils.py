@@ -55,7 +55,7 @@ def hugin_stitch(files, template=None, width=None, output_path="export/pano.jpg"
     project_path = f'./{tmp_dir}/temp.pto'
 
     # create Hugin project match to template
-    calls = [['pto_gen', '--projection=2', '--fov=360', '-o', project_path, files[0], files[1], files[2], files[3]],
+    calls = [['pto_gen', '--projection=2', '--fov=360', '-o', project_path, *files],  # *files -> unpack list
              ['pto_template', f'--output={project_path}', f'--template={template}', project_path]]
     for call in calls:
         subprocess.run(call)
