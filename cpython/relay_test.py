@@ -10,7 +10,7 @@ GPIO.setup(24, GPIO.OUT)
   
 try:  
     while True:
-        if GPIO.input(4):
+        if not GPIO.input(4):
             GPIO.output(24, 1)
             sleep(0.1)
         else:  

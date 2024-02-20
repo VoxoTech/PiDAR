@@ -53,8 +53,9 @@ def list_files(dir, type=None):
                 filepaths.append(filepath)
     return filepaths
 
-# def make_dir(dir):
-#     os.makedirs(dir, exist_ok=True)
+def make_dir(dir):
+    # if not os.path.exists(dir):
+    os.makedirs(dir, exist_ok=True)
 
 def merge_data(path, angle_step=0, up_axis="Z", type='npy', delimiter=","):
     if up_axis.upper() == "Z":
