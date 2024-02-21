@@ -1,12 +1,13 @@
 # PiDAR -- WORK IN PROGRESS!
 
 ## 360° 3D Panorama Scanner: 
-- LDRobot LD06 LiDAR
-- HQ Camera with M12 Fisheye Lens Hugin
+- LDRobot LD06 or STL27L LiDAR
+- HQ Camera with M12 Fisheye Lens 
+- Hugin Panorama stitching
 - Raspberry Pi 4
 - Nema17 stepper with A4988 driver
 
-Version 1:
+Version 1 (using 2x 18650 Batteries):
 
 <img src="docs/pidar_covershot.jpg" alt="breadboard" width="800"/>
 
