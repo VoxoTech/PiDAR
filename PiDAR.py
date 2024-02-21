@@ -1,11 +1,13 @@
-import numpy as np
 import RPi.GPIO as GPIO  # type: ignore
+import numpy as np
 from time import sleep
 
 from lib.platform_utils import allow_serial
 from lib.matplotlib_2D import plot_2D
 from lib.lidar_driver import LD06  #, STL27L
 from lib.a4988_driver import A4988
+from lib.rpicam_utils import take_photo
+from lib.pano_utils import hugin_stitch
 from lib.file_utils import save_data, make_dir
 
 
@@ -47,23 +49,50 @@ RELAY_PIN = 24
 GPIO.setup(RELAY_PIN, GPIO.OUT)
 GPIO.output(RELAY_PIN, 1)                   # Relay Power on
 
+# photos
+imgcount = 4
+raw = False
+blocking = True
+imglist = []
+
+# panorama
+template_path = f"panocam/template_{imgcount}.pto"
+width = 3600
+
+
 # ensure output directory
 make_dir(DATA_DIR)
 
-# initialize devices
+
+# initialize lidar
 lidar   = LD06(port=PORT, pwm_dc = PWM_DC, visualization=VIS, offset=OFFSET,format=FORMAT, dtype=DTYPE, data_dir=DATA_DIR, out_len=OUT_LEN)
+
+# initialize stepper
 stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_ANGLE, microsteps=MICROSTEPS, gear_ratio=GEAR_RATIO)
 
 
 # MAIN
 try:
-    # 0-180° SCAN
+    # 360° SHOOTING PHOTOS
+    for i in range(imgcount):
+        stepper.move_angle(360/imgcount)
+        imgpath, _ = take_photo(save_raw=raw, blocking=blocking)
+        imglist.append(imgpath)
+        # sleep(1)
+    
+
+    # STITCHING PROCESS (NON-BLOCKING)
+    project_path, _ = hugin_stitch(imglist, template=template_path, width=width)
+
+
+    # 180° SCAN
     for z_angle in np.arange(0, 180, h_res):
 
         if lidar.serial_connection.is_open:
-        
+
             if lidar.out_i == lidar.out_len:
-                # print("speed:", round(lidar.speed, 2))
+                print("Z angle:", round(z_angle, 2))
+                print("Speed:", round(lidar.speed, 2))
                 
                 # SAVE DATA
                 if lidar.format is not None:
@@ -75,23 +104,20 @@ try:
                 lidar.out_i = 0
 
             # READ LIDAR DATA FROM SERIAL
+            sleep(scan_delay)
             lidar.read()
             lidar.out_i += 1
-
+            
             stepper.move_steps(steps)
-            sleep(scan_delay)                   # duration of one lidar duration
-        stepper.move_steps(steps)               # n+1 step
 
-        sleep(1)
-        
-        # 180-360° JUST SHOOTING PHOTOS
-        for i in range(4):
-            stepper.move_angle(45)
-            sleep(1)                            # delay for photo
+    # last step to complete 180°
+    stepper.move_steps(steps)
 
 finally:
     print("SCANNING STOPPED")
-    GPIO.output(24, 0)                          # Relay Power off
-    GPIO.cleanup()
     lidar.close()
     stepper.close()
+
+    # Relay Power off
+    GPIO.output(RELAY_PIN, 0)                          
+    GPIO.cleanup(RELAY_PIN)

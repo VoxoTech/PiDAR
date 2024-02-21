@@ -1,7 +1,6 @@
 """
 http://paulbourke.net/dome/dualfish2sphere/diagram.pdf
 
-
 Hugin CLI parameters from StereoPi.sh :
     pto_gen --projection=2 --fov=360 -o ./tmp/project.pto $1 $2
     pto_template --output=./tmp/project.pto --template=template.pto ./tmp/project.pto
@@ -16,15 +15,15 @@ additional parameters:
     autooptimiser -n -o project.pto project.pto
     pano_modify  --projection=1 --fov=AUTO --center --canvas=AUTO --crop=AUTO -o project.pto project.pto
 """
-
 import math
 import numpy as np
 import subprocess
 import shutil
 import os
+from time import time
 
 
-def hugin_modify(project_path, output_path, width=6800):
+def hugin_modify(project_path, new_project_path, width=6800):
     # Load the project file(project_path)
     with open(project_path, 'r') as file:
         lines = file.readlines()
@@ -44,31 +43,54 @@ def hugin_modify(project_path, output_path, width=6800):
             lines[i] = " ".join(words)
             break
     
-    # Save the project file at output_path
-    with open(output_path, 'w') as file:
+    # Save the project file at new_project_path
+    with open(new_project_path, 'w') as file:
         file.writelines(lines)
 
-def hugin_stitch(files, template=None, width=None, output_path="export/pano.jpg", tmp_dir="panocam/tmp"):
-    # Create a temporary directory
+def hugin_stitch(files, template=None, width=None, output_path=None, cleanup=True):
+
+    project_dir = "panocam/projects"
+    tmp_dir = "panocam/tmp"
+    output_dir = "export"
+    
+    # create paths
+    filename = str(time())
+
+    os.makedirs(project_dir, exist_ok=True)
+    project_path = os.path.join(project_dir, filename + ".pto")
+
+    os.makedirs(output_dir, exist_ok=True)
+    if output_path is None:
+        output_path = os.path.join(output_dir, filename + ".jpg")
+
     os.makedirs(tmp_dir, exist_ok=True)
 
-    project_path = f'./{tmp_dir}/temp.pto'
 
-    # create Hugin project match to template
-    calls = [['pto_gen', '--projection=2', '--fov=360', '-o', project_path, *files],  # *files -> unpack list
-             ['pto_template', f'--output={project_path}', f'--template={template}', project_path]]
-    for call in calls:
-        subprocess.run(call)
+    # create Hugin project
+    subprocess.run(['pto_gen', '--projection=2', '--fov=360', '-o', project_path, *files])  # *files -> unpack list
     
+    # apply template
+    if template is not None:
+        subprocess.run(['pto_template', f'--output={project_path}', f'--template={template}', project_path])
+
     # modify resolution of the temporary project file
     if width is not None:
         hugin_modify(project_path, project_path, width=width)
 
-    # stitch the panorama
-    subprocess.run(['hugin_executor', '--stitching', f'--prefix={output_path}', project_path])
 
-    # remove temporary directory
-    shutil.rmtree(tmp_dir)
+    # start stitching
+    cmd_string = ['hugin_executor', '--stitching', f'--prefix={output_path}', project_path]
+    retval = subprocess.Popen(cmd_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    # # check returncode if stitching was successful
+    # if retval.returncode != 0:
+    #     raise Exception(f"Command failed with return code {retval.returncode}: {retval.stderr.decode()}")
+    
+    if cleanup:
+        # remove temporary directory
+        shutil.rmtree(tmp_dir)
+
+    return output_path, retval
 
 def sample_color(img, uv, normalize_color=False):
     longitude, latitude = uv
@@ -111,25 +133,21 @@ def spherical_to_longlat(uv):
     latitude = v * math.pi / 2
     return longitude, latitude
 
-# radians to degrees
-def deg(rad_list):
+def deg2rad(rad_list):
     # deg_list = [math.degrees(item) for item in rad_list]  # list comprehension
     return tuple(map(math.degrees, rad_list))
 
-# degrees to radians
-def rad(deg_list):
+def rad2deg(deg_list):
     return tuple(map(math.radians, deg_list))
 
-# % 360
 def mod(angles, mod=math.pi*2):
     angles = list(map(math.fmod, angles, [mod] * len(angles)))
     return angles
 
-
-# LIST CONVERSIONS
-# https://stackoverflow.com/questions/20924085/python-conversion-between-coordinates
 def polar2cartesian(angles, distances, offset_angle=math.pi/2):
     """
+    https://stackoverflow.com/questions/20924085/python-conversion-between-coordinates
+
     converts list of polar coordinates into cartesian (x/y)
     :param angles: list of radians
     :param distances: list of distances
@@ -149,7 +167,14 @@ def cartesian2polar(x_list, y_list, offset_angle=math.pi/2):
 
 
 if __name__ == "__main__":
-    longlat = vector_to_longlat((-1, 0, 1))
-    # longlat_to_spherical
-    print(deg(longlat))
-    # math.degrees(longlat[0]), math.degrees(longlat[1])
+    from file_utils import list_files
+
+    # Get all jpg files in the directory
+    files = list_files("images", type="jpg")
+    print(len(files), "images found.")
+
+    hugin_stitch(files, 
+                 template="panocam/template_4.pto",
+                 width=3600,
+                 output_path="export/pano.jpg",
+                 cleanup=True)

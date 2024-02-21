@@ -67,7 +67,7 @@ class A4988:
         return steps
     
     def close(self):
-        GPIO.setmode(GPIO.BCM)  # necessary to avoid "RuntimeError: Please set pin numbering mode" ?
+        GPIO.setmode(GPIO.BCM)      # TODO: necessary to avoid "RuntimeError: Please set pin numbering mode" ?
         GPIO.cleanup(self.ms_pins)
         GPIO.cleanup(self.dir_pin)
         GPIO.cleanup(self.step_pin)
@@ -97,9 +97,9 @@ if __name__ == "__main__":
     h_res = 360 * steps / MS360                 # 0.48464451
     scan_delay = 1 / (4500 * TARGET_RES / 360)  # 0.16
 
-    # test: 360°
-    stepper.move_steps(MS360)                   # 360°
-
+    # # TEST: MOVE FULL 360°
+    # stepper.move_steps(MS360)
+    
     try:
         # 0-180° SCAN
         for z_angle in np.arange(0, 180, h_res):
