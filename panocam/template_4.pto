@@ -5,13 +5,13 @@ m i5
 
 # image lines
 #-hugin  cropFactor=1
-i w4056 h3040 f2 v208.35 Ra-0.556760013103485 Rb1.08139002323151 Rc0.462319999933243 Rd-1.21420001983643 Re-0.123929999768734 Eev6.8 Er1 Eb0.96 r-90.337 p8.172 y0 TrX0 TrY0 TrZ0 Tpy0 Tpp0 j0 a-0.01094 b-0.09064 c0.0856 d11.64 e-21.21 g0 t0 Va1 Vb0 Vc0 Vd0 Vx0 Vy0  Vm5 Rt1 n"images/1707902930.332706.jpg"
+i w4056 h3040 f2 v208.35 Ra-0.556760013103485 Rb1.08139002323151 Rc0.462319999933243 Rd-1.21420001983643 Re-0.123929999768734 Eev6.8 Er1 Eb0.96 r-90.337 p8.172 y0 TrX0 TrY0 TrZ0 Tpy0 Tpp0 j0 a-0.01094 b-0.09064 c0.0856 d11.64 e-21.21 g0 t0 Va1 Vb0 Vc0 Vd0 Vx0 Vy0  Vm5 Rt1 n"../images/1707902930.332706.jpg"
 #-hugin  cropFactor=1
-i w4056 h3040 f2 v=0 Ra=0 Rb=0 Rc=0 Rd=0 Re=0 Eev6.8 Er1.1 Eb0.96 r-90.242 p8.257 y90.043 TrX0 TrY0 TrZ0 Tpy0 Tpp0 j0 a=0 b=0 c=0 d=0 e=0 g=0 t=0 Va=0 Vb=0 Vc=0 Vd=0 Vx=0 Vy=0  Vm5 Rt1 n"images/1707903069.8645103.jpg"
+i w4056 h3040 f2 v=0 Ra=0 Rb=0 Rc=0 Rd=0 Re=0 Eev6.8 Er1.1 Eb0.96 r-90.242 p8.257 y90.043 TrX0 TrY0 TrZ0 Tpy0 Tpp0 j0 a=0 b=0 c=0 d=0 e=0 g=0 t=0 Va=0 Vb=0 Vc=0 Vd=0 Vx=0 Vy=0  Vm5 Rt1 n"../images/1707903069.8645103.jpg"
 #-hugin  cropFactor=1
-i w4056 h3040 f2 v=0 Ra=0 Rb=0 Rc=0 Rd=0 Re=0 Eev6.8 Er1 Eb0.96 r-90.12 p8.203 y179.708 TrX0 TrY0 TrZ0 Tpy0 Tpp0 j0 a=0 b=0 c=0 d=0 e=0 g=0 t=0 Va=0 Vb=0 Vc=0 Vd=0 Vx=0 Vy=0  Vm5 Rt1 n"images/1707903129.8240888.jpg"
+i w4056 h3040 f2 v=0 Ra=0 Rb=0 Rc=0 Rd=0 Re=0 Eev6.8 Er1 Eb0.96 r-90.12 p8.203 y179.708 TrX0 TrY0 TrZ0 Tpy0 Tpp0 j0 a=0 b=0 c=0 d=0 e=0 g=0 t=0 Va=0 Vb=0 Vc=0 Vd=0 Vx=0 Vy=0  Vm5 Rt1 n"../images/1707903129.8240888.jpg"
 #-hugin  cropFactor=1
-i w4056 h3040 f2 v=0 Ra=0 Rb=0 Rc=0 Rd=0 Re=0 Eev6.8 Er1 Eb0.96 r-90.331 p8.021 y-90.198 TrX0 TrY0 TrZ0 Tpy0 Tpp0 j0 a=0 b=0 c=0 d=0 e=0 g=0 t=0 Va=0 Vb=0 Vc=0 Vd=0 Vx=0 Vy=0  Vm5 Rt1 n"images/1707903164.9552214.jpg"
+i w4056 h3040 f2 v=0 Ra=0 Rb=0 Rc=0 Rd=0 Re=0 Eev6.8 Er1 Eb0.96 r-90.331 p8.021 y-90.198 TrX0 TrY0 TrZ0 Tpy0 Tpp0 j0 a=0 b=0 c=0 d=0 e=0 g=0 t=0 Va=0 Vb=0 Vc=0 Vd=0 Vx=0 Vy=0  Vm5 Rt1 n"../images/1707903164.9552214.jpg"
 
 
 # specify variables that should be optimized

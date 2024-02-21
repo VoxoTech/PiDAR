@@ -61,6 +61,38 @@ Raspberry Pi:
     # Power LED Heartbeat:
     dtparam=pwr_led_trigger=timer
 
+### Scan Button: register GPIO interrupt
+
+create new service
+
+    sudo nano /etc/systemd/system/pidar.service
+
+with this content:
+
+    [Unit]
+    Description=GPIO interrupt for PiDAR Scan Button
+    After=network.target
+
+    [Service]
+    Type=simple
+    ExecStart=/usr/bin/python3 /home/pi/Documents/PiDAR/gpio_interrupt.py
+    Restart=always
+    RestartSec=2
+
+    [Install]
+    WantedBy=multi-user.target
+
+reload daemon, enable and start service:
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable pidar.service
+    sudo systemctl start pidar.service
+
+if necessary, check if the service is running:
+
+    sudo systemctl status pidar.service
+
+
 ## Serial Protocol
 LD06: baudrate 230400, data bits 8, no parity, 1 stopbit  
 sampling frequency 4500 Hz, scan frequency 5-13 Hz, distance 2cm - 12 meter, ambient light 30 kLux

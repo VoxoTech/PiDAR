@@ -37,12 +37,10 @@ HORIZONTAL_STEPS = 16
 
 GPIO.setwarnings(False)  # Disable warnings
 GPIO.setmode(GPIO.BCM)
-
-GPIO.setup(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
 GPIO.setup(24, GPIO.OUT)
-GPIO.output(24, 0)
 
+# Relay Power on
+GPIO.output(24, 1)
 
 # ensure output directory
 make_dir(DATA_DIR)
@@ -57,43 +55,31 @@ stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_AN
 #print(f"[INFO] {HORIZONTAL_ANGLE}° -> {steps} steps.")
 
 
-
-
 try:
-    while True:
-        # SCAN-Button pressed
-        if not GPIO.input(4):
-            # Relay Power on
-            GPIO.output(24, 1)
-
-            for z_angle in np.arange(0, 360, HORIZONTAL_ANGLE):
-                if lidar.serial_connection.is_open:
-                    # lidar.read_loop()  
+    for z_angle in np.arange(0, 360, HORIZONTAL_ANGLE):
+        if lidar.serial_connection.is_open:
+            # lidar.read_loop()  
+        
+            if lidar.out_i == lidar.out_len:
+                # print("speed:", round(lidar.speed, 2))
                 
-                    if lidar.out_i == lidar.out_len:
-                        # print("speed:", round(lidar.speed, 2))
-                        
-                        # SAVE DATA
-                        if lidar.format is not None:
-                            save_data(lidar.data_dir, lidar.points_2d, lidar.format)
+                # SAVE DATA
+                if lidar.format is not None:
+                    save_data(lidar.data_dir, lidar.points_2d, lidar.format)
 
-                        # VISUALIZE
-                        if lidar.visualization is not None:
-                            lidar.visualization.update_coordinates(lidar.points_2d)
-                        lidar.out_i = 0
+                # VISUALIZE
+                if lidar.visualization is not None:
+                    lidar.visualization.update_coordinates(lidar.points_2d)
+                lidar.out_i = 0
 
-                    lidar.read()
-                    lidar.out_i += 1
+            lidar.read()
+            lidar.out_i += 1
 
-                    stepper.move_steps(HORIZONTAL_STEPS)
-
-        else:
-            # GPIO.output(24, 0)  # Relay Power of
-            sleep(0.1)
+            stepper.move_steps(HORIZONTAL_STEPS)
 
 finally:
     print("SCANNING STOPPED")
-    GPIO.output(24, 0)
+    GPIO.output(24, 0)  # Relay Power off
     GPIO.cleanup()
 
     lidar.close()

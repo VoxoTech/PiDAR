@@ -4,7 +4,7 @@ from lib.pano_utils import hugin_stitch
 
 if __name__ == "__main__":
     # Get all jpg files in the directory
-    files = list_files("panocam/images", type="jpg")
+    files = list_files("images", type="jpg")
     print(len(files), "images found.")
 
     files = [files[0], files[2], files[4], files[6]]

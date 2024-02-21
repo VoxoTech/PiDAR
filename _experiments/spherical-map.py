@@ -2,10 +2,10 @@
 
 import cv2
 import numpy as np
-from lib.angular import *
-from lib.image import *
 import matplotlib.pyplot as plt
-import random
+# import random
+
+from lib.pano_utils import vector_to_longlat, longlat_to_spherical, sample_color
 
 
 def denormalize_position(pos, size):
@@ -30,7 +30,7 @@ def scatterplot(x, y, z=None, colors=None):
     plt.show()
 
 
-img_path = "sample photos/stereopi_result.jpg"
+img_path = "images/1707902930.332706.jpg"
 img_BGR = cv2.imread(img_path)
 img_RGB = cv2.cvtColor(img_BGR, cv2.COLOR_BGR2RGB)
 
@@ -81,7 +81,4 @@ for i, x in enumerate(x_list):
     if i == br-1:
         break
 
-
 scatterplot(x_list[0:br], y_list[0:br], z=z_list[0:br], colors=colors)
-
-

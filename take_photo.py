@@ -40,5 +40,5 @@ if __name__ == "__main__":
     from time import time
     import os
 
-    filename = os.path.join("panocam/images", str(time()) + ".jpg")
+    filename = os.path.join("images", str(time()) + ".jpg")
     take_photo(filename, save_raw=False)

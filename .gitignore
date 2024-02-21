@@ -15,6 +15,6 @@ todo.md
 _old
 
 # data directory
-/panocam/images/*
+/images/*
 /data/*
 /export/*
