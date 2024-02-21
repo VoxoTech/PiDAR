@@ -1,9 +1,11 @@
 import RPi.GPIO as GPIO  # type: ignore
 import subprocess
+import time
 
 
-BUTTON_GPIO = 4
-CONDA_ENV = "py310"  # None
+BUTTON_GPIO = 17
+CONDA_PATH  = "/home/pi/miniforge3/condabin/conda"
+CONDA_ENV   = "py310"  # None
 MAIN_SCRIPT = "/home/pi/Documents/PiDAR/PiDAR.py"
 
 # Define the callback function that runs when the button is pressed
@@ -20,7 +22,7 @@ def button_callback(channel):
             print("Process has finished, return code:", return_code)
             
     # Start a new process with the main script
-    call = ["python3", MAIN_SCRIPT] if CONDA_ENV is None else ["conda", "run", "-n", CONDA_ENV, "python", MAIN_SCRIPT]
+    call = ["python3", MAIN_SCRIPT] if CONDA_ENV is None else [CONDA_PATH, "run", "-n", CONDA_ENV, "python", MAIN_SCRIPT]
     process = subprocess.Popen(call)
     print("Started a new process, pid:", process.pid)
 
@@ -38,6 +40,7 @@ process = None
 # Keep the main thread running
 try:
     while True:
-        pass
+        time.sleep(0.1)
+        
 except KeyboardInterrupt:
     GPIO.cleanup()
