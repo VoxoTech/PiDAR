@@ -7,7 +7,7 @@ from lib.visualization import opengl_fallback, visualize
 opengl_fallback()
 
 path = "data"
-pointcloud_array = merge_data(path, angle_step=2, type='npy')
+pointcloud_array = merge_data(path, angle_step=0.48464451, type='npy')
 pcd = pcd_from_np(pointcloud_array)
 
 export_pointcloud([pcd], "export/3d-scan", type="e57")

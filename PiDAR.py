@@ -20,12 +20,12 @@ GPIO.setwarnings(False)
 
 # LiDAR DRIVER
 PORT = '/dev/ttyS0'                         # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyS0', 'Linux': '/dev/ttyUSB0'}  # dmesg | grep "tty"
-PWM_DC = 0.2                                # duty cycle: 0.23 = 10 Hz, 0.1 = 4 Hz
+PWM_DC = 0.4                                # duty cycle: 0.23 = 10 Hz, 0.1 = 4 Hz
 OFFSET = np.pi / 2                          # = 90°
 FORMAT = 'npy'                              # 'npy' or 'csv' or None
 DTYPE = np.float32                          # np.float64 or np.float32
 DATA_DIR = "data"
-VIS = plot_2D()                             # plot_2D() or None
+VIS = None # plot_2D()                             # plot_2D() or None
 OUT_LEN = 40                                # visualize after every nth batch
 
 # A4988 DRIVER
@@ -50,14 +50,11 @@ GPIO.setup(RELAY_PIN, GPIO.OUT)
 GPIO.output(RELAY_PIN, 1)                   # Relay Power on
 
 # photos
-imgcount = 4
+IMGCOUNT = 4
 raw = False
-blocking = True
 imglist = []
-
-# panorama
-template_path = f"panocam/template_{imgcount}.pto"
-width = 3600
+template_path = f"panocam/template_{IMGCOUNT}.pto"
+PANO_WIDTH = 3600
 
 
 # ensure output directory
@@ -74,15 +71,15 @@ stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_AN
 # MAIN
 try:
     # 360° SHOOTING PHOTOS
-    for i in range(imgcount):
-        stepper.move_angle(360/imgcount)
-        imgpath, _ = take_photo(save_raw=raw, blocking=blocking)
+    for i in range(IMGCOUNT):
+        stepper.move_angle(360/IMGCOUNT)
+        imgpath = take_photo(save_raw=raw, blocking=True)
         imglist.append(imgpath)
         # sleep(1)
     
 
     # STITCHING PROCESS (NON-BLOCKING)
-    project_path, _ = hugin_stitch(imglist, template=template_path, width=width)
+    project_path = hugin_stitch(imglist, template=template_path, width=PANO_WIDTH)
 
 
     # 180° SCAN
@@ -91,7 +88,7 @@ try:
         if lidar.serial_connection.is_open:
 
             if lidar.out_i == lidar.out_len:
-                print("Z angle:", round(z_angle, 2))
+                #print("Z angle:", round(z_angle, 2))
                 print("Speed:", round(lidar.speed, 2))
                 
                 # SAVE DATA

@@ -47,7 +47,7 @@ def hugin_modify(project_path, new_project_path, width=6800):
     with open(new_project_path, 'w') as file:
         file.writelines(lines)
 
-def hugin_stitch(files, template=None, width=None, output_path=None, cleanup=True):
+def hugin_stitch(files, template=None, width=None, output_path=None, cleanup=False):
 
     project_dir = "panocam/projects"
     tmp_dir = "panocam/tmp"
@@ -62,6 +62,7 @@ def hugin_stitch(files, template=None, width=None, output_path=None, cleanup=Tru
     os.makedirs(output_dir, exist_ok=True)
     if output_path is None:
         output_path = os.path.join(output_dir, filename + ".jpg")
+    print("output path:", output_path)
 
     os.makedirs(tmp_dir, exist_ok=True)
 
@@ -80,17 +81,17 @@ def hugin_stitch(files, template=None, width=None, output_path=None, cleanup=Tru
 
     # start stitching
     cmd_string = ['hugin_executor', '--stitching', f'--prefix={output_path}', project_path]
-    retval = subprocess.Popen(cmd_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    retval = subprocess.Popen(cmd_string)
 
     # # check returncode if stitching was successful
     # if retval.returncode != 0:
-    #     raise Exception(f"Command failed with return code {retval.returncode}: {retval.stderr.decode()}")
+    #     raise Exception(f"Command failed with return code {retval.returncode}: {retval.stderr}")
     
-    if cleanup:
-        # remove temporary directory
-        shutil.rmtree(tmp_dir)
+    # if cleanup:
+    #     # remove temporary directory
+    #     shutil.rmtree(tmp_dir)
 
-    return output_path, retval
+    return output_path
 
 def sample_color(img, uv, normalize_color=False):
     longitude, latitude = uv
@@ -172,9 +173,8 @@ if __name__ == "__main__":
     # Get all jpg files in the directory
     files = list_files("images", type="jpg")
     print(len(files), "images found.")
+    
+    files = files[0:4]
+    print("selected", files)
 
-    hugin_stitch(files, 
-                 template="panocam/template_4.pto",
-                 width=3600,
-                 output_path="export/pano.jpg",
-                 cleanup=True)
+    hugin_stitch(files, template="panocam/template_4.pto", width=3600)

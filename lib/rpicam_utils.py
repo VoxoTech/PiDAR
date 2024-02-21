@@ -42,11 +42,11 @@ def take_photo(path=None, save_raw=False, blocking=False):
         retval = subprocess.Popen(cmd_string, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
-    # check returncode if the command was successful
-    if retval.returncode != 0:
-        raise Exception(f"Command failed with return code {retval.returncode}: {retval.stderr.decode()}")
+    # # check returncode if the command was successful
+    # if retval.returncode != 0:
+    #     raise Exception(f"Command failed with return code {retval.returncode}: {retval.stderr.decode()}")
 
-    return path, retval
+    return path
 
 
 if __name__ == "__main__":
