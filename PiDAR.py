@@ -14,7 +14,7 @@ allow_serial()
 
 # CONSTANTS
 PORT = '/dev/ttyS0'         # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyS0', 'Linux': '/dev/ttyUSB0'}  # dmesg | grep "tty"
-PWM_DC = 0.1                # duty cycle: 0.23 = 10 Hz, 0.1 = 4 Hz
+PWM_DC = 0.2                # duty cycle: 0.23 = 10 Hz, 0.1 = 4 Hz
 OFFSET = np.pi / 2          # = 90°
 FORMAT = 'npy'              # 'npy' or 'csv' or None
 DTYPE = np.float64          # np.float32

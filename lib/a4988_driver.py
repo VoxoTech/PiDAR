@@ -109,7 +109,7 @@ if __name__ == "__main__":
         time.sleep(1)
 
         # 180-360° only shooting photos
-        for i in range(5):
+        for i in range(4):
             stepper.move_angle(45)
             time.sleep(1)                       # delay for photo
 
