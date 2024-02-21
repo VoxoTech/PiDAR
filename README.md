@@ -1,25 +1,23 @@
-# PiDAR -- WORK IN PROGRESS!
+# PiDAR - a 360° 3D Panorama Scanner
+## WORK IN PROGRESS!
 
-## 360° 3D Panorama Scanner: 
 - LDRobot LD06 or STL27L LiDAR
 - HQ Camera with M12 Fisheye Lens 
 - Hugin Panorama stitching
 - Raspberry Pi 4
 - Nema17 stepper with A4988 driver
 
+<img src="mechanical_design/pidar_covershot.jpg" alt="PiDAR 360° Laserscanner" width="800"/>
 Version 1 (using 2x 18650 Batteries):
 
-<img src="docs/pidar_covershot.jpg" alt="breadboard" width="800"/>
-
 ## core features:
-- optimized LD06 serial/UART driver
-- export 2D data (including luminance) as csv
-- cartesian 2D visualisation (matplotlib)
-- 3D conversion based on Z-rotation 
-- interactive 3D visualisation (Open3D)
-- export 3D data as [e57](https://github.com/davidcaron/pye57), pcd or ply
-- aligning multiple scans using global registration and ICP fine-tuning
-- poisson surface meshing
+- custom LDRobot LD06 / STL27L UART driver with PWM support
+- export cartesian 2D data (including luminance) as csv
+- 2D visualisation (matplotlib)
+- 3D visualisation (Open3D) based on Z-rotation
+- align multiple scans using global registration and ICP fine-tuning
+- export 3D pointcloud as [e57](https://github.com/davidcaron/pye57), pcd or ply
+- poisson surface meshing (very slow on Pi4, recommended to run on PC instead)
 
 inspired by:
 - [LIDAR_LD06_python_loder](https://github.com/henjin0/LIDAR_LD06_python_loder) and [Lidar_LD06_for_Arduino](https://github.com/henjin0/Lidar_LD06_for_Arduino) by Inoue Minoru ("[henjin0](https://github.com/henjin0)")
@@ -35,23 +33,27 @@ Open3D Demo Data for global registration, ICP, meshing etc.:
 
 ## wiring
 
-Version 2 - now using 10mAh Powerbank with Step-Up converter and Relay for better power efficiency
+<img src="mechanical_design/Fritzing/pidar_breadboard.jpg" alt="breadboard version 2.0.1" width="600"/>
 
-<img src="docs/pidar_breadboard.jpg" alt="breadboard version 2" width="600"/>
+Version 2 - (37Wh Powerbank with Step-Up converter + Relay for power efficiency)
 
-LD06 port (left to right)
-- UART Tx (yellow), PWM (white), GND (black), VCC 5V (red)
+### LD06 / STL27L:
+- UART Tx (yellow)
+- PWM (white)
+- GND (black)
+- VCC 5V (red)
 
-Raspberry Pi:
-- LD06 UART0 Rx: GP15 (Pin10)
-- LD06 PWM0: GP18 (Pin12)
-- LD06 5V: Pin2 or Pin4
-- LD06 GND: e.g. Pin6 or Pin14
+### Raspberry Pi:
+- LD06 UART0 Rx: GP15
+- LD06 PWM0: GP18
+- Power Button: GP03
+- Scan Button: GP17
+- A4988 direction: GP26, step: GP19
+- A4988 microstepping mode: GP5, GP6, GP13
 
-### Power Button (Wake up & Shut Down)
-
-- Button at GPIO 3
-- install [shutdown script](https://github.com/Howchoo/pi-power-button)
+### Power Button 
+- Wakeup is hardwired to Pin 3
+- install [Shutdown script](https://github.com/Howchoo/pi-power-button)
 
 ### Power LED and CPU fan
     sudo nano /boot/firmware/config.txt
@@ -64,11 +66,11 @@ Raspberry Pi:
 
 ### Scan Button: register GPIO interrupt
 
-create new service
+create new service for autostart
 
     sudo nano /etc/systemd/system/pidar.service
 
-with this content:
+content:
 
     [Unit]
     Description=GPIO interrupt for PiDAR Scan Button
@@ -89,13 +91,14 @@ reload daemon, enable and start service:
     sudo systemctl enable pidar.service
     sudo systemctl start pidar.service
 
-if necessary, check if the service is running:
+check service if necessary:
 
     sudo systemctl status pidar.service
 
 
 ## Serial Protocol
-LD06: baudrate 230400, data bits 8, no parity, 1 stopbit  
+### LD06
+baudrate 230400, data bits 8, no parity, 1 stopbit  
 sampling frequency 4500 Hz, scan frequency 5-13 Hz, distance 2cm - 12 meter, ambient light 30 kLux
 
 total package size: 48 Byte, big endian.
@@ -117,7 +120,7 @@ The calculation method of the angle is as following:
 len is the length of the packet, and the i value range is [0, len].
 
 
-## Permission for Serial Access on Raspberry Pi
+## set Permission for UART on Raspberry Pi
 temporary solution: 
 
     sudo chmod a+rw /dev/ttyS0
@@ -148,7 +151,7 @@ Install [RPi Hardware PWM library](https://github.com/Pioreactor/rpi_hardware_pw
     pip install rpi-hardware-pwm
 
 
-## Panorama
+## Panorama Stitching
 install Hugin with enblend plugin
 
     sudo apt-get install hugin-tools enblend
@@ -156,7 +159,7 @@ install Hugin with enblend plugin
 the stitching script is inspired by [StereoPi](https://medium.com/stereopi/stitching-360-panorama-with-raspberry-pi-cm3-stereopi-and-two-fisheye-cameras-step-by-step-guide-aeca3ff35871).
 
 
-## LDRobot Lidar unit
+## LDRobot LiDAR Units
 
 LD06: 
 - sampling frequency 4500 Hz
