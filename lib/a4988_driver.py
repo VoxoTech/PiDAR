@@ -94,10 +94,11 @@ if __name__ == "__main__":
     stepper = A4988(dir_pin, step_pin, ms_pins, delay=delay, step_angle=step_angle, microsteps=ms, gear_ratio=gear_ratio)
 
     steps = int(ms360 * target_res / 360)       # 16
-    h_res = 360 * ms / ms360                    # 0.48464451
+    h_res = 360 * steps / ms360                 # 0.48464451
     scan_delay = 1 / (4500 * target_res / 360)  # 0.16
 
-    # stepper.move_steps(11885)                   # 360°
+    # test: 360°
+    stepper.move_steps(ms360)                   # 360°
 
     try:
         # 0-180° scanning
