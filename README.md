@@ -176,6 +176,10 @@ STL27L:
 - [wiki](https://www.waveshare.com/wiki/DTOF_LIDAR_STL27L)
 - ROS2 driver [git](https://github.com/ldrobotSensorTeam/ldlidar_stl_ros2?tab=readme-ov-file#Instructions)
 
+## M12 Fisheye Lens for HQ Camera
+
+- ArduCam M12 Lens M25156H18 [(PDF page 7)](https://www.arducam.com/doc/Arducam_M12_Lens_Kit_for_Pi_HQ_Camera.pdf)
+
 
 ## Troubleshooting
 
