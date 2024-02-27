@@ -12,6 +12,7 @@ todo.md
 /mechanical_design/*
 !mechanical_design/pidar_covershot.jpg
 !mechanical_design/v1
+/mechanical_design/v1/*.3mf
 !mechanical_design/Fritzing
 /mechanical_design/Fritzing/parts
 _old

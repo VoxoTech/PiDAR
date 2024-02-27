@@ -96,6 +96,11 @@ check service if necessary:
     sudo systemctl status pidar.service
 
 
+## additional printed parts
+- [M12 to C-Mount lens adapter](https://www.thingiverse.com/thing:4444398)
+- [NEMA17 Planetary Gearbox](https://www.printables.com/de/model/782336-nema17-planetary-gearbox-fixed)
+
+
 ## Serial Protocol
 ### LD06
 baudrate 230400, data bits 8, no parity, 1 stopbit  

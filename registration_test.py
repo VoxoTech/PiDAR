@@ -9,13 +9,12 @@ https://www.open3d.org/docs/latest/tutorial/Basic/icp_registration.html
 import open3d as o3d
 import time
 
-from lib.transformation import get_transform_vectors, transform
-from lib.pointcloud import set_verbosity, preprocess_point_cloud, export_pointcloud
+from lib.pointcloud import set_verbosity, preprocess_point_cloud, export_pointcloud, get_transform_vectors, transform
 from lib.registration import global_registration, ICP_registration
 from lib.visualization import visualize
 
 
-# # LINESCANNER GROUND-TRUTH
+# # GROUND-TRUTH
 # groundtruth_translation = (50, 0, 100)
 # groundtruth_euler       = (0.0, 20.0, 0)
 # # groundtruth_source    = transform(source, translate=translate, euler_rotate_deg=rotate)

@@ -10,10 +10,10 @@ import copy
 import os
 
 try:
-    from lib.transformation import transform
+    from lib.pointcloud import transform
     from lib.platform_utils import get_platform
 except:
-    from transformation import transform
+    from pointcloud import transform
     from platform_utils import get_platform
 
 
@@ -85,3 +85,15 @@ def visualize_simple(mesh1, mesh2, transformation, uniform_colors=True):
                                       lookat=[1.9892, 2.0208, 1.8945],
                                       up=[-0.2779, -0.9482, 0.1556],
                                       mesh_show_back_face=True)
+
+
+if __name__ == "__main__":
+    from pointcloud import preprocess_point_cloud
+
+    # download demo data
+    DemoICPPointClouds = o3d.data.DemoICPPointClouds()
+    path0, path1, path2 = DemoICPPointClouds.paths
+
+    pcd = o3d.io.read_point_cloud(path0)
+    pcd_down = preprocess_point_cloud(pcd, voxel_size=0, compute_fpfh=False)
+    visualize([pcd_down])
