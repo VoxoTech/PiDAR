@@ -88,12 +88,12 @@ def visualize_simple(mesh1, mesh2, transformation, uniform_colors=True):
 
 
 if __name__ == "__main__":
-    from pointcloud import preprocess_point_cloud
+    from pointcloud import estimate_point_normals
 
     # download demo data
     DemoICPPointClouds = o3d.data.DemoICPPointClouds()
     path0, path1, path2 = DemoICPPointClouds.paths
 
     pcd = o3d.io.read_point_cloud(path0)
-    pcd_down = preprocess_point_cloud(pcd, voxel_size=0, compute_fpfh=False)
+    pcd_down = estimate_point_normals(pcd, radius=1, max_nn=30)
     visualize([pcd_down])

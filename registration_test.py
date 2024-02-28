@@ -9,8 +9,8 @@ https://www.open3d.org/docs/latest/tutorial/Basic/icp_registration.html
 import open3d as o3d
 import time
 
-from lib.pointcloud import set_verbosity, preprocess_point_cloud, export_pointcloud, get_transform_vectors, transform
-from lib.registration import global_registration, ICP_registration
+from lib.pointcloud import set_verbosity, export_pointcloud, get_transform_vectors, transform, estimate_point_normals
+from lib.registration import fpfh_from_pointcloud, global_registration, ICP_registration
 from lib.visualization import visualize
 
 
@@ -41,8 +41,11 @@ source = o3d.io.read_point_cloud(path2)
 target = o3d.io.read_point_cloud(path0)
 
 # downsample, compute normals, and compute FPFH feature
-source_down, source_fpfh = preprocess_point_cloud(source, voxel_size)
-target_down, target_fpfh = preprocess_point_cloud(target, voxel_size)
+source_down = estimate_point_normals(source.voxel_down_sample(voxel_size), radius=voxel_size*2, max_nn=30)
+source_fpfh = fpfh_from_pointcloud(source_down, radius=voxel_size*5, max_nn=100)
+
+target_down = estimate_point_normals(target.voxel_down_sample(voxel_size), radius=voxel_size*2, max_nn=30)
+target_fpfh = fpfh_from_pointcloud(target_down, radius=voxel_size*5, max_nn=100)
 
 visualize([source, target], uniform_colors=True)
 visualize([source_down, target_down], uniform_colors=True)

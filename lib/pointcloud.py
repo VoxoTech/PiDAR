@@ -7,110 +7,12 @@ import os
 from scipy.spatial.transform import Rotation as R
 
 
+# set verbosity level to suppress Open3D debug messages
 def set_verbosity():
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)  # .Debug
 
-def __KD_search_param__(radius, max_nn):
-    return o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=max_nn)
-
-def estimate_point_normals(pcd, radius=0.1, max_nn=30):
-    KD_search_param = __KD_search_param__(radius, max_nn)
-    pcd.estimate_normals(search_param=KD_search_param)
-    return pcd
-
-def export_pointcloud(pcd, savepath, type="pcd", write_ascii=True, compressed=True):
-    if type == "pcd" or type == "ply":
-        if write_ascii:
-            compressed = False
-        o3d.io.write_point_cloud(savepath+"."+type, pcd, write_ascii=write_ascii, compressed=compressed),
-
-    elif type == "csv":
-        if not isinstance(pcd, np.ndarray):
-            array = np.asarray(pcd.points)
-        np.savetxt(savepath+"."+type, array, delimiter=",")
-
-    elif type == "e57":
-        # if a single point cloud is provided, convert it to a list
-        if isinstance(pcd, o3d.geometry.PointCloud):
-            pcd_list = [pcd]
-        elif isinstance(pcd, list): 
-            pcd_list = pcd
-
-        # Create an E57 object with write mode
-        e57 = pye57.E57(savepath+"."+type, mode='w')
-
-        # Write each point cloud to the E57 file as a separate scan
-        for pcd in pcd_list:
-            # Convert open3d point cloud to numpy array
-            points = np.asarray(pcd.points)
-            colors = np.asarray(pcd.colors) * 255
-
-            # Create a dictionary with keys for each coordinate and color
-            data_raw = {
-                "cartesianX": points[:, 0],
-                "cartesianY": points[:, 1],
-                "cartesianZ": points[:, 2],
-                "colorRed"  : colors[:, 0],
-                "colorGreen": colors[:, 1],
-                "colorBlue" : colors[:, 2]}
-
-            # Write the point cloud data to the E57 file
-            e57.write_scan_raw(data_raw)
-        e57.close()
-
-def fpfh_from_pointcloud(pcd, radius=0.25, max_nn=100):
-    ''' Fast Point Feature Histograms (FPFH) descriptor'''
-    KD_search_param = __KD_search_param__(radius, max_nn)
-    return o3d.pipelines.registration.compute_fpfh_feature(pcd, KD_search_param)
-
-def preprocess_point_cloud(pcd, voxel_size=0, compute_fpfh=True):
-    if voxel_size > 0:
-        # downsample
-        pcd_down = pcd.voxel_down_sample(voxel_size)
-    else:
-        pcd_down = copy.deepcopy(pcd)
-        
-    # estimate normals
-    pcd_down = estimate_point_normals(pcd_down, radius=voxel_size*2, max_nn=30)
-
-    if compute_fpfh:
-        # compute FPFH feature
-        pcd_fpfh = fpfh_from_pointcloud(pcd_down, radius=voxel_size*5, max_nn=100)
-        return pcd_down, pcd_fpfh
-    else:
-        return pcd_down
-
-def pcd_from_np(array, columns="XYZI"):
-    columns = columns.upper()
-    zeros = np.zeros((array.shape[0], 1))
-    pcd = o3d.geometry.PointCloud()
-
-    # 3D points
-    if "XYZ" in columns:
-        pcd.points = o3d.utility.Vector3dVector(array[:, 0:3])
-        color_i = 3
-
-     # 2D points
-    else:
-        color_i = 2
-        if "XY" in columns:
-            pcd.points = o3d.utility.Vector3dVector(np.hstack((array[:, 0:2], zeros)))
-        elif "XZ" in columns:
-            pcd.points = o3d.utility.Vector3dVector(np.hstack((array[:, 0:1], zeros, array[:, 1:2])))
-        elif "YZ" in columns:
-            pcd.points = o3d.utility.Vector3dVector(np.hstack((zeros, array[:, 0:2])))
-        else:
-            raise ValueError("Unsupported point cloud type: " + type)
-    
-    # colors
-    if "I" in columns:  # type == "XYZI" -> array.shape[1] == 4:
-        intensities = array[:, color_i] / 255  # normalize intensity values
-        pcd.colors = o3d.utility.Vector3dVector(np.column_stack([intensities, intensities, intensities]))
-    elif "RGB" in columns:
-        pcd.colors = o3d.utility.Vector3dVector(array[:, color_i:color_i+3] / 255)
-
-    return pcd
-
+# load point cloud from file (3D: pcd, ply, e57 | 2D: csv, npy), return as pcd object or numpy table
+# columns parameter: "XYZ" for 3D, "XZ" for 2D vertical, "I" for intensity or "RGB" for color
 def import_pointcloud(filepath, columns="XYZI", csv_delimiter=",", as_array=False):
     type = os.path.splitext(filepath)[1][1:]
 
@@ -160,6 +62,88 @@ def import_pointcloud(filepath, columns="XYZI", csv_delimiter=",", as_array=Fals
     
     return pcd
 
+# export point cloud to file (pcd, ply, e57, csv)
+def export_pointcloud(pcd, savepath, type="pcd", write_ascii=True, compressed=True):
+    if type == "pcd" or type == "ply":
+        if write_ascii:
+            compressed = False
+        o3d.io.write_point_cloud(savepath+"."+type, pcd, write_ascii=write_ascii, compressed=compressed),
+
+    elif type == "csv":
+        if not isinstance(pcd, np.ndarray):
+            array = np.asarray(pcd.points)
+        np.savetxt(savepath+"."+type, array, delimiter=",")
+
+    elif type == "e57":
+        # if a single point cloud is provided, convert it to a list
+        if isinstance(pcd, o3d.geometry.PointCloud):
+            pcd_list = [pcd]
+        elif isinstance(pcd, list): 
+            pcd_list = pcd
+
+        # Create an E57 object with write mode
+        e57 = pye57.E57(savepath+"."+type, mode='w')
+
+        # Write each point cloud to the E57 file as a separate scan
+        for pcd in pcd_list:
+            # Convert open3d point cloud to numpy array
+            points = np.asarray(pcd.points)
+            colors = np.asarray(pcd.colors) * 255
+
+            # Create a dictionary with keys for each coordinate and color
+            data_raw = {
+                "cartesianX": points[:, 0],
+                "cartesianY": points[:, 1],
+                "cartesianZ": points[:, 2],
+                "colorRed"  : colors[:, 0],
+                "colorGreen": colors[:, 1],
+                "colorBlue" : colors[:, 2]}
+
+            # Write the point cloud data to the E57 file
+            e57.write_scan_raw(data_raw)
+        e57.close()
+
+# estimate normals for a point cloud
+def estimate_point_normals(pcd, radius=0.1, max_nn=30):
+    KD_search_param = o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=max_nn)
+    pcd.estimate_normals(search_param=KD_search_param)
+    return pcd
+
+# convert numpy array to open3d point cloud
+# supports 2D and 3D points, intensity and RGB colors
+def pcd_from_np(array, columns="XYZI"):
+    columns = columns.upper()
+    zeros = np.zeros((array.shape[0], 1))
+    pcd = o3d.geometry.PointCloud()
+
+    # 3D points
+    if "XYZ" in columns:
+        pcd.points = o3d.utility.Vector3dVector(array[:, 0:3])
+        color_i = 3
+
+     # 2D points
+    else:
+        color_i = 2
+        if "XY" in columns:
+            pcd.points = o3d.utility.Vector3dVector(np.hstack((array[:, 0:2], zeros)))
+        elif "XZ" in columns:
+            pcd.points = o3d.utility.Vector3dVector(np.hstack((array[:, 0:1], zeros, array[:, 1:2])))
+        elif "YZ" in columns:
+            pcd.points = o3d.utility.Vector3dVector(np.hstack((zeros, array[:, 0:2])))
+        else:
+            raise ValueError("Unsupported point cloud type: " + type)
+    
+    # colors
+    if "I" in columns:  # type == "XYZI" -> array.shape[1] == 4:
+        intensities = array[:, color_i] / 255  # normalize intensity values
+        pcd.colors = o3d.utility.Vector3dVector(np.column_stack([intensities, intensities, intensities]))
+    elif "RGB" in columns:
+        pcd.colors = o3d.utility.Vector3dVector(array[:, color_i:color_i+3] / 255)
+
+    return pcd
+
+# load list of point cloud files and merge them by angle.
+# returns pcd or numpy array
 def merge_data(filepaths, angle_step=0, offset=(0,0,0), up_axis="Z", columns="XZI", csv_delimiter=",", as_pcd=True):
     if up_axis.upper() == "Z":
         rotation_axis = np.array([0, 0, 1])
@@ -186,19 +170,6 @@ def merge_data(filepaths, angle_step=0, offset=(0,0,0), up_axis="Z", columns="XZ
 
 ###########################################
 # Transformation functions
-    
-""" Rotate a vector v about axis by taking the component of v perpendicular to axis,
-rotating it theta in the plane perpendicular to axis, 
-then add the component of v parallel to axis.
-
-Let a be a unit vector along an axis axis. Then a = axis/norm(axis).
-Let A = I x a, the cross product of a with an identity matrix I.
-Then exp(theta,A) is the rotation matrix.
-Finally, dotting the rotation matrix with the vector will rotate the vector.
-
-https://www.kite.com/python/answers/how-to-rotate-a-3d-vector-about-an-axis-in-python
-https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.html
-"""
 
 def rotate_3D(points3d, rotation_degrees, translation_vector=(0,0,0), rotation_axis=(0,0,1)):
     rotation_axis = np.array(rotation_axis)
@@ -233,6 +204,18 @@ def rotate_3D(points3d, rotation_degrees, translation_vector=(0,0,0), rotation_a
     return result_points
 
 # def rotate_3D_np(points3d, rotation_axis, rotation_degrees):
+#     """ Rotate a vector v about axis by taking the component of v perpendicular to axis,
+#     rotating it theta in the plane perpendicular to axis, 
+#     then add the component of v parallel to axis.
+
+#     Let a be a unit vector along an axis axis. Then a = axis/norm(axis).
+#     Let A = I x a, the cross product of a with an identity matrix I.
+#     Then exp(theta,A) is the rotation matrix.
+#     Finally, dotting the rotation matrix with the vector will rotate the vector.
+
+#     https://www.kite.com/python/answers/how-to-rotate-a-3d-vector-about-an-axis-in-python
+#     https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.html
+#     """
 #     rotation_radians = np.radians(rotation_degrees)
 #     rotation_vector = rotation_radians * rotation_axis
 #     rotation = R.from_rotvec(rotation_vector)
@@ -249,6 +232,7 @@ def rotate_3D(points3d, rotation_degrees, translation_vector=(0,0,0), rotation_a
 #         result_points[i][0:3] = rotation.apply(point)
 #     return result_points
 
+# extract translation and rotation vectors from transformation matrix
 def get_transform_vectors(transform_M):
     # Extract translation (top-right 3x1 sub-matrix)
     translation = transform_M[:3, 3]
@@ -261,6 +245,7 @@ def get_transform_vectors(transform_M):
 
     return translation, euler_angles
 
+# apply translation and rotation to open3d point cloud
 def transform(pcd, transformation=None, translate=None, euler_rotate_deg=None, pivot=(0,0,0)):
     pcd_temp = copy.deepcopy(pcd)
     
@@ -276,3 +261,16 @@ def transform(pcd, transformation=None, translate=None, euler_rotate_deg=None, p
         pcd_temp.rotate(rotation_matrix, center=pivot)
 
     return pcd_temp
+
+
+if __name__ == "__main__":
+    from file_utils import list_files
+    from visualization import opengl_fallback, visualize
+
+    opengl_fallback()
+
+    filepaths = list_files("data", type='npy')
+    pcd = merge_data(filepaths, angle_step=5.5, offset=(0, 10, 0), up_axis="Z", columns="XZI", as_pcd=True)
+
+    export_pointcloud([pcd], "export/3d-scan", type="e57")
+    visualize([pcd], unlit=True)

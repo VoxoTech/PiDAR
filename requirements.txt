@@ -10,5 +10,7 @@ RPi.GPIO
 
 pye57
 
+exifread
+
 # adafruit_board_toolkit
 # aioconsole
