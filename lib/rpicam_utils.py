@@ -96,26 +96,13 @@ class ExifReader:
                 print(f"Key:{tag}, value {self.tags[tag]}")
 
 
-def __calculate_channel_histogram__(img, channel, bins=256):
-    hist = cv2.calcHist([img], [channel], None, [bins], [0, 256])
-    cv2.normalize(hist, hist, 0, 255, cv2.NORM_MINMAX)
-    return hist
+def r_b_gains(img1, img2):  # source, target
+    (b1, _, r1) = cv2.split(img1.astype("float32"))
+    (b2, _, r2) = cv2.split(img2.astype("float32"))
 
-def __calculate_RGB_histogram__(img, bins=256, channels=[2,1,0]):  # channel order in opencv is BGR
-    hists = []
-    for channel in channels:
-        hists.append(__calculate_channel_histogram__(img, channel, bins)) 
-    return hists
-
-def __compare_channel_histograms__(hist1, hist2):
-    diff = cv2.compareHist(hist1, hist2, cv2.HISTCMP_BHATTACHARYYA)
-    return diff
-
-def __compare_RGB_histograms__(hists1, hists2):
-    diffs = []
-    for channel in range(len(hists1)):
-        diffs.append(__compare_channel_histograms__(hists1[channel], hists2[channel]))
-    return diffs
+    R = r2.mean() / r1.mean()
+    B = b2.mean() / b1.mean()
+    return R, B
 
 
 def estimate_camera_parameters(threshold=0.1, max_iterations=10, set_gain=None, bins=32):
@@ -137,7 +124,7 @@ def estimate_camera_parameters(threshold=0.1, max_iterations=10, set_gain=None, 
     exif_auto = ExifReader(path_auto)
 
     img_auto = cv2.imread(path_auto)
-    hists1 = __calculate_RGB_histogram__(img_auto, bins=bins, channels=awb_channels)
+    # hists1 = __calculate_RGB_histogram__(img_auto, bins=bins, channels=awb_channels)
     
     cv2.imshow("auto", img_auto)
     cv2.waitKey(10)
@@ -156,18 +143,23 @@ def estimate_camera_parameters(threshold=0.1, max_iterations=10, set_gain=None, 
         cv2.imshow("awbgains:", img_awbgains)
         cv2.waitKey(10)
 
-        hists2 = __calculate_RGB_histogram__(img_awbgains, bins=bins, channels=awb_channels)
+        R, B = awbgains(img_awbgains, img_auto)
+        print(R, B)
 
-        # calculate Bhattacharyya distance for each channel
-        diff_r, diff_b = __compare_RGB_histograms__(hists1, hists2)
-
-        print(f"iteration: {i+1} | Difference R:{round(diff_r,2)}\t B: {round(diff_b,2)})")
+        awbgains[0] = awbgains[0] * R
+        awbgains[1] = awbgains[1] * B
         
-        # Adjust awbgains values based on difference
-        if diff_r > threshold:
-            awbgains[0] *= 1.0 - 0.1 * np.sign(np.mean(hists1[0]) - np.mean(hists2[0]))
-        if diff_b > threshold:
-            awbgains[1] *= 1.0 - 0.1 * np.sign(np.mean(hists1[1]) - np.mean(hists2[1]))
+        # hists2 = __calculate_RGB_histogram__(img_awbgains, bins=bins, channels=awb_channels)
+
+        # # calculate Bhattacharyya distance for each channel
+        # diff_r, diff_b = __compare_RGB_histograms__(hists1, hists2)
+
+        # # Adjust awbgains values based on difference
+        # if diff_r > threshold:
+        #     awbgains[0] *= 1.0 - 0.1 * np.sign(np.mean(hists1[0]) - np.mean(hists2[0]))
+        # if diff_b > threshold:
+        #     awbgains[1] *= 1.0 - 0.1 * np.sign(np.mean(hists1[1]) - np.mean(hists2[1]))
+
 
     # compute new exposure time based on custom gain
     if set_gain:
