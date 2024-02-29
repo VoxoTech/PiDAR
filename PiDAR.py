@@ -6,7 +6,7 @@ from lib.platform_utils import allow_serial
 from lib.matplotlib_2D import plot_2D
 from lib.lidar_driver import LD06  #, STL27L
 from lib.a4988_driver import A4988
-from lib.rpicam_utils import take_photo
+from lib.rpicam_utils import take_photo, estimate_camera_parameters, ExifReader
 from lib.pano_utils import hugin_stitch
 from lib.file_utils import save_data, make_dir
 
@@ -14,9 +14,11 @@ from lib.file_utils import save_data, make_dir
 # allow access to serial port on Raspberry Pi
 allow_serial()
 
+DEBUG = False
+
 # GPIO SETUP
 GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
+GPIO.setwarnings(DEBUG)
 
 # LiDAR DRIVER
 PORT = '/dev/ttyS0'                         # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyS0', 'Linux': '/dev/ttyUSB0'}  # dmesg | grep "tty"
@@ -25,7 +27,7 @@ OFFSET = np.pi / 2                          # = 90°
 FORMAT = 'npy'                              # 'npy' or 'csv' or None
 DTYPE = np.float32                          # np.float64 or np.float32
 DATA_DIR = "data"
-VIS = None # plot_2D()                             # plot_2D() or None
+VIS = plot_2D()                             # plot_2D() or None
 OUT_LEN = 40                                # visualize after every nth batch
 
 # A4988 DRIVER
@@ -55,6 +57,13 @@ raw = False
 imglist = []
 template_path = f"panocam/template_{IMGCOUNT}.pto"
 PANO_WIDTH = 3600
+set_gain = 1
+awb_thres=0.01
+
+# extract exposure time and gain from exif data, iterate through Red/Blue Gains for custom AWB
+exposure_time, gain, awbgains = estimate_camera_parameters(set_gain=set_gain, awb_thres=awb_thres)
+if DEBUG:
+    print("[RESULT] AE:", exposure_time, "| Gain:", gain, "| AWB R:", round(awbgains[0],3), "B:", round(awbgains[1],3))
 
 
 # ensure output directory
@@ -73,7 +82,9 @@ try:
     # 360° SHOOTING PHOTOS
     for i in range(IMGCOUNT):
         stepper.move_angle(360/IMGCOUNT)
-        imgpath = take_photo(save_raw=raw, blocking=True)
+
+        # take HighRes image using fixed values
+        imgpath = take_photo(exposure_time=exposure_time, gain=gain, awbgains=awbgains, denoise="cdn_hq", save_raw=raw, blocking=True)
         imglist.append(imgpath)
         # sleep(1)
     

@@ -10,7 +10,6 @@ import subprocess
 import cv2
 from time import time
 import exifread
-import numpy as np
 
 
 def take_photo(path=None, 
@@ -96,7 +95,7 @@ class ExifReader:
                 print(f"Key:{tag}, value {self.tags[tag]}")
 
 
-def r_b_gains(img1, img2):  # source, target
+def get_r_b_gains(img1, img2):  # source, target
     (b1, _, r1) = cv2.split(img1.astype("float32"))
     (b2, _, r2) = cv2.split(img2.astype("float32"))
 
@@ -105,10 +104,13 @@ def r_b_gains(img1, img2):  # source, target
     return R, B
 
 
-def estimate_camera_parameters(threshold=0.1, max_iterations=10, set_gain=None, bins=32):
+def is_between(value, limits):
+    return limits[0] <= value <= limits[1]
+
+
+def estimate_camera_parameters(awb_thres=0.01, max_iterations=10, set_gain=None):
     preview_dims = (320, 240)
     awbgains = [1, 1]
-    awb_channels = [2,0]  # R, B
     preview_denoise = "cdn_off"
 
     tmp_dir="images/tmp"
@@ -122,12 +124,9 @@ def estimate_camera_parameters(threshold=0.1, max_iterations=10, set_gain=None, 
                            blocking=True)
     
     exif_auto = ExifReader(path_auto)
-
     img_auto = cv2.imread(path_auto)
-    # hists1 = __calculate_RGB_histogram__(img_auto, bins=bins, channels=awb_channels)
     
-    cv2.imshow("auto", img_auto)
-    cv2.waitKey(10)
+    # cv2.imshow("auto", img_auto)
 
     for i in range(max_iterations):
         # take photo with manual exposure, gain and awbgains
@@ -140,27 +139,20 @@ def estimate_camera_parameters(threshold=0.1, max_iterations=10, set_gain=None, 
                                    blocking=True)
         
         img_awbgains = cv2.imread(path_awbgains)
-        cv2.imshow("awbgains:", img_awbgains)
-        cv2.waitKey(10)
+        
+        # cv2.imshow("awbgains:", img_awbgains)
+        # cv2.waitKey(1)
 
-        R, B = awbgains(img_awbgains, img_auto)
-        print(R, B)
+        R, B = get_r_b_gains(img_awbgains, img_auto)
+
+        limits = (1-awb_thres, 1+awb_thres)
+        if is_between(R, limits) and is_between(B, limits):
+            break
 
         awbgains[0] = awbgains[0] * R
         awbgains[1] = awbgains[1] * B
+        # print("awbgains:", awbgains)
         
-        # hists2 = __calculate_RGB_histogram__(img_awbgains, bins=bins, channels=awb_channels)
-
-        # # calculate Bhattacharyya distance for each channel
-        # diff_r, diff_b = __compare_RGB_histograms__(hists1, hists2)
-
-        # # Adjust awbgains values based on difference
-        # if diff_r > threshold:
-        #     awbgains[0] *= 1.0 - 0.1 * np.sign(np.mean(hists1[0]) - np.mean(hists2[0]))
-        # if diff_b > threshold:
-        #     awbgains[1] *= 1.0 - 0.1 * np.sign(np.mean(hists1[1]) - np.mean(hists2[1]))
-
-
     # compute new exposure time based on custom gain
     if set_gain:
         gain = set_gain
@@ -173,13 +165,11 @@ def estimate_camera_parameters(threshold=0.1, max_iterations=10, set_gain=None, 
 
 
 if __name__ == "__main__":
-    # path_auto = take_photo(dims=(640, 480), denoise="cdn_off", awb="auto", blocking=True)
-    # exif_auto = ExifReader(path_auto)
-    # print("ExposureTime:", exif_auto.exposure_time, "| Gain:", exif_auto.gain)
-
-
-    exposure_time, gain, awbgains = estimate_camera_parameters(set_gain=1, threshold=0.05, max_iterations=10, bins=32)
-    print("[RESULT] AE:", exposure_time, "| Gain:", gain, "| AWB:", awbgains)
+    # extract exposure time and gain from exif data, iterate through Red/Blue Gains for custom AWB
+    exposure_time, gain, awbgains = estimate_camera_parameters(set_gain=1, awb_thres=0.01)
+    print("[RESULT] AE:", exposure_time, "| Gain:", gain, "| AWB R:", round(awbgains[0],3), "B:", round(awbgains[1],3))
 
     # take HighRes image using fixed values
-    path = take_photo(exposure_time=exposure_time, gain=gain, denoise="cdn_hq", awbgains=awbgains)
+    path = take_photo(exposure_time=exposure_time, gain=gain, awbgains=awbgains, denoise="cdn_hq")
+    exif = ExifReader(path)
+    print("ExposureTime:", exif.exposure_time, "| Gain:", exif.gain)
