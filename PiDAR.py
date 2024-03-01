@@ -21,18 +21,18 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(DEBUG)
 
 # ENABLES
-enable_camera = False
-enable_stitching = True                     # requires enable_camera
+enable_camera = True
 enable_lidar = True
+enable_stitching = True                     # requires enable_camera
 
 # LiDAR DRIVER
 PORT = '/dev/ttyS0'                         # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyS0', 'Linux': '/dev/ttyUSB0'}  # dmesg | grep "tty"
-PWM_DC = 0.23                               # duty cycle: 0.23 = 6.5 Hz, 0.1 = 4 Hz
+PWM_DC = 0.4                               # duty cycle: 0.23 = 6.5 Hz, 0.1 = 4 Hz
 OFFSET = np.pi / 2                          # = 90°
 FORMAT = 'npy'                              # 'npy' or 'csv' or None
 DTYPE = np.float64                          # np.float64 or np.float32
 DATA_DIR = "data"
-VIS = None  # plot_2D()                             # plot_2D() or None
+VIS = None                                  # plot_2D() or None
 OUT_LEN = 40                                # visualize after every nth batch
 
 # A4988 DRIVER
@@ -65,7 +65,7 @@ PANO_WIDTH = 3600
 set_gain = 1
 awb_thres=0.01
 
-packages_per_revolution = round(4500 / 12 / 10)  # 38
+packages_per_revolution =  58  # round(4500 / 12 / 6.43)
 hsteps = 180 / h_res
 max_packages = hsteps * packages_per_revolution
 
@@ -94,6 +94,7 @@ if enable_lidar:
 
 # MAIN
 try:
+
     # 360° SHOOTING PHOTOS
     if enable_camera:
         for i in range(IMGCOUNT):
@@ -103,38 +104,19 @@ try:
             imgpath = take_photo(exposure_time=exposure_time, gain=gain, awbgains=awbgains, denoise="cdn_hq", save_raw=raw, blocking=True)
             imglist.append(imgpath)
             # sleep(1)
-    
-    # STITCHING PROCESS (NON-BLOCKING)
-    if enable_stitching and enable_camera:
-        project_path = hugin_stitch(imglist, template=template_path, width=PANO_WIDTH)
+
 
     # 180° SCAN
     if enable_lidar:
         lidar.read_loop(callback=move_steps_callback, max_packages=max_packages)
-
-        # for z_angle in np.arange(0, 180, h_res):
-        #     if lidar.serial_connection.is_open:
-        #         print("Z angle:", round(z_angle, 2))
-        #         print("Speed:", round(lidar.speed, 2))
-
-        #         # SAVE DATA
-        #         if lidar.format is not None:
-        #             save_data(lidar.data_dir, lidar.points_2d, lidar.format)
-
-        #         if lidar.out_i == lidar.out_len:
-        #             # VISUALIZE
-        #             if lidar.visualization is not None:
-        #                 lidar.visualization.update_coordinates(lidar.points_2d)
-        #             lidar.out_i = 0
-
-        #         # READ LIDAR DATA FROM SERIAL
-        #         sleep(scan_delay)
-        #         lidar.read()
-        #         lidar.out_i += 1
-        #         stepper.move_steps(steps)
-
         stepper.move_steps(steps)  # last step to complete 180°
-        stepper.move_angle(180)    # complete revolution
+        stepper.move_angle(-180)    # return
+    
+
+    # STITCHING PROCESS (NON-BLOCKING)
+    if enable_stitching and enable_camera:
+        project_path = hugin_stitch(imglist, template=template_path, width=PANO_WIDTH)
+
 
 finally:
     print("PiDAR STOPPED")

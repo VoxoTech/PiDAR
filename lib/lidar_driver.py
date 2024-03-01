@@ -104,7 +104,7 @@ class LD06:
         while self.serial_connection.is_open and (max_packages is None or loop_count <= max_packages):
             try:
                 if self.out_i == self.out_len:
-                    #print("speed:", round(self.speed, 2))
+                    # print("speed:", round(self.speed, 2))
                     
                     if callback is not None:
                         callback()
@@ -216,7 +216,8 @@ if __name__ == "__main__":
     max_packages = hsteps * packages_per_revolution
 
 
-    lidar = LD06(port = 'COM8',
+    lidar = LD06(port = '/dev/ttyS0',  # 'COM8',
+                 pwm_dc = 0.4,
                  offset = np.pi / 2, 
                  format = 'npy',
                  dtype =np.float64,

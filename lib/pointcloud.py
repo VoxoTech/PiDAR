@@ -150,7 +150,7 @@ def pcd_from_np(array, columns="XYZI"):
 
 # load list of point cloud files and merge them by angle.
 # returns pcd or numpy array
-def merge_data(filepaths, angle_step=0, offset=(0,0,0), up_axis="Z", columns="XZI", csv_delimiter=",", as_pcd=True):
+def merge_data(filepaths, angle_step=0, ccw=False, offset=(0,0,0), up_axis="Z", columns="XZI", csv_delimiter=",", as_pcd=True):
     if up_axis.upper() == "X":
         rotation_axis = np.array([1, 0, 0])
     elif up_axis.upper() == "Y":
@@ -170,7 +170,11 @@ def merge_data(filepaths, angle_step=0, offset=(0,0,0), up_axis="Z", columns="XZ
 
         points3d = rotate_3D(points3d, angle, translation_vector=offset, rotation_axis=rotation_axis)
         pointcloud = np.append(pointcloud, points3d, axis=0)
-        angle += angle_step
+
+        if ccw:
+            angle += angle_step
+        else:
+            angle -= angle_step
     
     # Remove rows with NaN values
     pointcloud = remove_NaN(pointcloud)
