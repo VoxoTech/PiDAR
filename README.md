@@ -24,7 +24,8 @@ inspired by:
 - [ShaunPrice's](https://github.com/ShaunPrice/360-camera) StereoPi-supporting fork of [BrianBock's](https://github.com/BrianBock/360-camera) 360-camera script
 
 future reading:
-- when moving: [Doppler-ICP](https://github.com/aevainc/Doppler-ICP/blob/main/README.md)
+- [Doppler-ICP](https://github.com/aevainc/Doppler-ICP/blob/main/README.md)
+- [KISS-ICP](https://github.com/PRBonn/kiss-icp), [Lidar-Visualizer](https://github.com/PRBonn/lidar-visualizer)
 
 Open3D Demo Data for global registration, ICP, meshing etc.:
 - [BunnyMesh.ply](https://github.com/isl-org/open3d_downloads/releases/download/20220201-data/BunnyMesh.ply) from [20220201-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220201-data)

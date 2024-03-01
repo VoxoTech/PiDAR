@@ -92,7 +92,8 @@ class LD06:
         print("Serial connection closed.")
     
 
-    def read_loop(self):
+    def read_loop(self, callback=None, max_packages=None):
+        loop_count = 0
         if self.visualization is not None:
             # matplotlib close event
             def on_close(event):
@@ -100,11 +101,14 @@ class LD06:
                 print("Closing...")
             self.visualization.fig.canvas.mpl_connect('close_event', on_close)
 
-        while self.serial_connection.is_open:
+        while self.serial_connection.is_open and (max_packages is None or loop_count <= max_packages):
             try:
                 if self.out_i == self.out_len:
-                    # print("speed:", round(self.speed, 2))
+                    #print("speed:", round(self.speed, 2))
                     
+                    if callback is not None:
+                        callback()
+                
                     # SAVE DATA
                     if self.format is not None:
                         save_data(self.data_dir, self.points_2d, self.format)
@@ -117,6 +121,7 @@ class LD06:
                 print("SerialException")
                 break
             self.out_i += 1
+            loop_count += 1
 
 
     def read(self):
@@ -183,41 +188,50 @@ class LD06:
         return x_list, y_list
 
 
-
 class STL27L(LD06):
-    def __init__(self, port=None, pwm_channel=0, pwm_dc=0.4, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
+    def __init__(self, port='COM6', pwm_channel=0, pwm_dc=0.4, offset=0, data_dir="data", out_len=200, format=None, visualization=None, dtype=np.float32):
         # call the __init__ method of the parent class with the new baudrate and sampling rate
         super().__init__(port, pwm_channel, pwm_dc, 921600, offset, data_dir, out_len, format, visualization, dtype)
         self.sampling_rate = 21600  # new sampling rate for STL27L
 
 
+def my_callback():
+    print("Callback function called!")
+
 
 if __name__ == "__main__":
-    from matplotlib_2D import plot_2D
 
-    # CONSTANTS
-    PORT = 'COM10'  # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyACM0', 'Linux': '/dev/ttyUSB0'}[platform.system()] 
-    ANGLE_OFFSET = np.pi / 2    # = 90°
-    FORMAT = 'npy'              # 'npy' or 'csv' or None
-    DTYPE = np.float64
-    DATA_DIR = "data"
-    VISUALIZATION = plot_2D()   # plot_2D() or None
-    OUT_LEN = 40                # visualize after every nth batch
+    visualize = True
 
-    # ensure output directory
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
+    if visualize:
+        from matplotlib_2D import plot_2D
+        visualization = plot_2D()
+    else:
+        import threading
+        visualization = None
+    
+    # 4500 points per second / 12 points per batch / 10 revolutions per second = 37.5 batches per revolution
+    packages_per_revolution = 38
+    hsteps = 50
+    max_packages = hsteps * packages_per_revolution
 
-    lidar = LD06(port=PORT,
-                visualization=VISUALIZATION,
-                offset=ANGLE_OFFSET, 
-                format=FORMAT,
-                dtype=DTYPE,
-                data_dir=DATA_DIR,
-                out_len=OUT_LEN)
+
+    lidar = LD06(port = 'COM8',
+                 offset = np.pi / 2, 
+                 format = 'npy',
+                 dtype =np.float64,
+                 data_dir ="data",
+                 visualization = visualization,
+                 out_len = packages_per_revolution)  
 
     try:
         if lidar.serial_connection.is_open:
-            lidar.read_loop()
+
+            if visualize:
+                lidar.read_loop(callback=my_callback, max_packages=max_packages)
+            else:
+                read_thread = threading.Thread(target=lidar.read_loop, kwargs={'callback': my_callback, 'max_packages': max_packages})
+                read_thread.start()
+                read_thread.join()
     finally:
         lidar.close()

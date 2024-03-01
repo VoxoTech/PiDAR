@@ -65,6 +65,10 @@ PANO_WIDTH = 3600
 set_gain = 1
 awb_thres=0.01
 
+packages_per_revolution = round(4500 / 12 / 10)  # 38
+hsteps = 180 / h_res
+max_packages = hsteps * packages_per_revolution
+
 
 # calibrate camera
 if enable_camera:
@@ -73,17 +77,19 @@ if enable_camera:
     if DEBUG:
         print("[RESULT] AE:", exposure_time, "| Gain:", gain, "| AWB R:", round(awbgains[0],3), "B:", round(awbgains[1],3))
 
-
 # ensure output directory
 make_dir(DATA_DIR)
+
+# initialize stepper
+stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_ANGLE, microsteps=MICROSTEPS, gear_ratio=GEAR_RATIO)
+
+def move_steps_callback():
+    stepper.move_steps(steps)
 
 
 # initialize lidar
 if enable_lidar:
     lidar   = LD06(port=PORT, pwm_dc = PWM_DC, visualization=VIS, offset=OFFSET,format=FORMAT, dtype=DTYPE, data_dir=DATA_DIR, out_len=OUT_LEN)
-
-# initialize stepper
-stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_ANGLE, microsteps=MICROSTEPS, gear_ratio=GEAR_RATIO)
 
 
 # MAIN
@@ -104,29 +110,28 @@ try:
 
     # 180° SCAN
     if enable_lidar:
-        for z_angle in np.arange(0, 180, h_res):
+        lidar.read_loop(callback=move_steps_callback, max_packages=max_packages)
 
-            if lidar.serial_connection.is_open:
-                print("Z angle:", round(z_angle, 2))
-                print("Speed:", round(lidar.speed, 2))
+        # for z_angle in np.arange(0, 180, h_res):
+        #     if lidar.serial_connection.is_open:
+        #         print("Z angle:", round(z_angle, 2))
+        #         print("Speed:", round(lidar.speed, 2))
 
-                # SAVE DATA
-                if lidar.format is not None:
-                    save_data(lidar.data_dir, lidar.points_2d, lidar.format)
+        #         # SAVE DATA
+        #         if lidar.format is not None:
+        #             save_data(lidar.data_dir, lidar.points_2d, lidar.format)
 
+        #         if lidar.out_i == lidar.out_len:
+        #             # VISUALIZE
+        #             if lidar.visualization is not None:
+        #                 lidar.visualization.update_coordinates(lidar.points_2d)
+        #             lidar.out_i = 0
 
-                if lidar.out_i == lidar.out_len:
-                    # VISUALIZE
-                    if lidar.visualization is not None:
-                        lidar.visualization.update_coordinates(lidar.points_2d)
-                    lidar.out_i = 0
-
-                # READ LIDAR DATA FROM SERIAL
-                sleep(scan_delay)
-                lidar.read()
-                lidar.out_i += 1
-                
-                stepper.move_steps(steps)
+        #         # READ LIDAR DATA FROM SERIAL
+        #         sleep(scan_delay)
+        #         lidar.read()
+        #         lidar.out_i += 1
+        #         stepper.move_steps(steps)
 
         stepper.move_steps(steps)  # last step to complete 180°
         stepper.move_angle(180)    # complete revolution
