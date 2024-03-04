@@ -6,9 +6,9 @@ from lib.platform_utils import allow_serial
 # from lib.matplotlib_2D import plot_2D
 from lib.lidar_driver import LD06  #, STL27L
 from lib.a4988_driver import A4988
-from lib.rpicam_utils import take_photo, estimate_camera_parameters, ExifReader
+from lib.rpicam_utils import take_photo, estimate_camera_parameters
 from lib.pano_utils import hugin_stitch
-from lib.file_utils import save_data, make_dir
+from lib.file_utils import make_dir
 
 
 # allow access to serial port on Raspberry Pi
@@ -65,9 +65,9 @@ PANO_WIDTH = 3600
 set_gain = 1
 awb_thres=0.01
 
-packages_per_revolution =  58  # round(4500 / 12 / 6.43)
 hsteps = 180 / h_res
-max_packages = hsteps * packages_per_revolution
+# packages_per_revolution =  58  # round(4500 / 12 / 6.43)
+# max_packages = hsteps * packages_per_revolution
 
 
 # calibrate camera
@@ -83,13 +83,18 @@ make_dir(DATA_DIR)
 # initialize stepper
 stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_ANGLE, microsteps=MICROSTEPS, gear_ratio=GEAR_RATIO)
 
-def move_steps_callback():
-    stepper.move_steps(steps)
-
-
 # initialize lidar
 if enable_lidar:
     lidar   = LD06(port=PORT, pwm_dc = PWM_DC, visualization=VIS, offset=OFFSET,format=FORMAT, dtype=DTYPE, data_dir=DATA_DIR, out_len=OUT_LEN)
+    
+    # callback function for lidar.read_loop()
+    def move_steps_callback():
+        stepper.move_steps(steps)
+        lidar.z_angle = stepper.get_current_angle()
+
+    if not enable_camera:
+        # wait for lidar to lock rotational speed
+        sleep(3)
 
 
 # MAIN
@@ -98,19 +103,19 @@ try:
     # 360° SHOOTING PHOTOS
     if enable_camera:
         for i in range(IMGCOUNT):
-            stepper.move_angle(360/IMGCOUNT)
-
             # take HighRes image using fixed values
             imgpath = take_photo(exposure_time=exposure_time, gain=gain, awbgains=awbgains, denoise="cdn_hq", save_raw=raw, blocking=True)
             imglist.append(imgpath)
-            # sleep(1)
+
+            stepper.move_angle(360/IMGCOUNT)
 
 
     # 180° SCAN
     if enable_lidar:
-        lidar.read_loop(callback=move_steps_callback, max_packages=max_packages)
+        lidar.read_loop(callback=move_steps_callback, max_packages=hsteps)  # max_packages ?
+
         stepper.move_steps(steps)  # last step to complete 180°
-        stepper.move_angle(-180)    # return
+        stepper.move_angle(-180)    # return to 0°
     
 
     # STITCHING PROCESS (NON-BLOCKING)

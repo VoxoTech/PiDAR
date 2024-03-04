@@ -8,6 +8,7 @@ https://storage.googleapis.com/mauser-public-images/prod_description_document/20
 import numpy as np
 import serial
 import os
+from time import sleep
 
 try:
     # running from project root
@@ -22,6 +23,8 @@ except:
 class LD06:
     def __init__(self, port=None, pwm_channel=0, pwm_dc=0.4, baudrate=230400, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
         self.platform           = get_platform()
+
+        self.z_angle            = 0  # gets updated externally by A4988 driver
 
         # constants
         self.start_byte         = bytes([0x54])
@@ -101,6 +104,9 @@ class LD06:
                 print("Closing...")
             self.visualization.fig.canvas.mpl_connect('close_event', on_close)
 
+        # TODO: hack; wait for other processes to calm down
+        sleep(2)
+
         while self.serial_connection.is_open and (max_packages is None or loop_count <= max_packages):
             try:
                 if self.out_i == self.out_len:
@@ -111,15 +117,21 @@ class LD06:
                 
                     # SAVE DATA
                     if self.format is not None:
-                        save_data(self.data_dir, self.points_2d, self.format)
+                        filepath = os.path.join(self.data_dir, f"image_{round(self.z_angle, 2)}.{self.format}")
+                        save_data(filepath, self.points_2d)
+
                     # VISUALIZE
                     if self.visualization is not None:
                         self.visualization.update_coordinates(self.points_2d)
+
                     self.out_i = 0
+
                 self.read()
+
             except serial.SerialException:
                 print("SerialException")
                 break
+
             self.out_i += 1
             loop_count += 1
 
@@ -169,14 +181,14 @@ class LD06:
         FSA = float(int.from_bytes(byte_array[2:4][::-1], 'big')) / 100         # start angle in degrees
         LSA = float(int.from_bytes(byte_array[40:42][::-1], 'big')) / 100       # end angle in degrees
         self.timestamp = int.from_bytes(byte_array[42:44][::-1], 'big')         # timestamp in milliseconds < 30000
-        CS = int.from_bytes(byte_array[44:45][::-1], 'big')                     # CRC Checksum                                
+        # CS = int.from_bytes(byte_array[44:45][::-1], 'big')                     # TODO: CRC Checksum                                
         
         angleStep = ((LSA - FSA) if LSA - FSA > 0 else (LSA + 360 - FSA)) / (self.dlength-1)
 
         # 3 bytes per sample x 12 samples
         for counter, i in enumerate(range(0, 3 * self.dlength, 3)): 
             self.angle_batch[counter] = ((angleStep * counter + FSA) % 360) * self.deg2rad
-            self.distance_batch[counter] = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big') / 100
+            self.distance_batch[counter] = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big') / 10  # cm
             self.luminance_batch[counter] = byte_array[6 + i]
 
 

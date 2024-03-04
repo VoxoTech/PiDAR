@@ -10,7 +10,7 @@ import RPi.GPIO as GPIO     # type: ignore
 from time import sleep
 
 class A4988:
-    def __init__(self, dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=1.0, verbose=False):
+    def __init__(self, dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=1.0, init_angle=0, verbose=False):
         # Disable warnings
         GPIO.setwarnings(verbose) 
 
@@ -41,6 +41,8 @@ class A4988:
             for pin, state in zip(self.ms_pins, self.step_modes[self.microsteps]):
                 GPIO.output(pin, state)
 
+        self.current_angle = init_angle
+
     def set_direction(self, direction):
         GPIO.output(self.dir_pin, direction)
 
@@ -56,15 +58,32 @@ class A4988:
     def move_steps(self, steps):
         direction = steps < 0   # < clockwise positive
         steps = abs(int(steps))
-        
+
         self.set_direction(direction)
         for _ in range(steps):
             self.step()
+        
+        # update current angle
+        self.current_angle += self.get_steps_for_angle(steps)
 
     def move_angle(self, angle):
         steps = self.get_steps_for_angle(angle)
         self.move_steps(steps)
+    
+        # Update current angle
+        self.current_angle += angle
+
         return steps
+    
+    def move_to_angle(self, target_angle):
+        # Calculate the difference between the current and target angle
+        angle_difference = target_angle - self.current_angle
+
+        # Move the motor by the calculated difference
+        self.move_angle(angle_difference)
+
+    def get_current_angle(self):
+        return self.current_angle
     
     def close(self):
         GPIO.setmode(GPIO.BCM)      # TODO: necessary to avoid "RuntimeError: Please set pin numbering mode" ?
@@ -112,6 +131,7 @@ if __name__ == "__main__":
         # 180-360° JUST SHOOTING PHOTOS
         for i in range(4):
             stepper.move_angle(45)
+            print(f"Photo {i+1} at {stepper.current_angle}°")
             sleep(1)                            # delay for photo
 
     finally:

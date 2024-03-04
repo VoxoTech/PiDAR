@@ -1,38 +1,41 @@
 import os
-
-import numpy as np
-import csv
 import time
 import threading
+import csv
+import numpy as np
 
 
-def save_data(data_dir, np_array, format='npy'):
+def save_data(filepath, np_array):
+    dirname, filename = os.path.split(filepath)
+    basename, format = os.path.splitext(filename)
+    format = format.lstrip('.')
+
+    # if filename is *.npy, create a new filename with a timestamp
+    if basename == '*':
+        filename = f"{dirname}/{time.time()}.{format}"
+    else:
+        filename = filepath
+
     if format == 'npy':
-        t = threading.Thread(target=save_npy, args=(data_dir, np_array))
+        t = threading.Thread(target=save_npy, args=(filename, np_array))
     else:  # format == 'csv':
-        t = threading.Thread(target=save_csv, args=(data_dir, np_array))
+        t = threading.Thread(target=save_csv, args=(filename, np_array))
     t.start()
 
-def save_csv(save_dir, points_2d, csv_delimiter=',', filename=None):
-    if filename is None:
-        filename = f"{save_dir}/{time.time()}.csv"
-
-    with open(filename, 'w', newline='') as f:
+def save_csv(filepath, points_2d, csv_delimiter=','):
+    with open(filepath, 'w', newline='') as f:
         writer = csv.writer(f, delimiter=csv_delimiter)
         writer.writerows(points_2d)
 
-def save_npy(save_dir, points_2d, filename=None):
-    if filename is None:
-        filename = f"{save_dir}/{time.time()}.npy"
-
-    np.save(filename, points_2d)
+def save_npy(filepath, points_2d):
+    np.save(filepath, points_2d)
 
 def csv_from_npy_dir(dir):
     npy_files = list_files(dir, type='npy')
     for npy_file in npy_files:
         data = np.load(npy_file)
         csv_file = os.path.splitext(npy_file)[0] + '.csv'
-        save_csv(os.path.dirname(csv_file), data, filename=csv_file)
+        save_csv(csv_file, data)
 
 def list_files(dir, type=None, recursive=False):
     # from glob import glob

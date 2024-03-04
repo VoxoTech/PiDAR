@@ -150,7 +150,7 @@ def pcd_from_np(array, columns="XYZI"):
 
 # load list of point cloud files and merge them by angle.
 # returns pcd or numpy array
-def merge_data(filepaths, angle_step=0, ccw=False, offset=(0,0,0), up_axis="Z", columns="XZI", csv_delimiter=",", as_pcd=True):
+def merge_data(filepaths, angle_step=0, ccw=False, offset=(0,0,0), up_axis="Z", columns="XZI", csv_delimiter=",", as_pcd=True, estimate_normals=True):
     if up_axis.upper() == "X":
         rotation_axis = np.array([1, 0, 0])
     elif up_axis.upper() == "Y":
@@ -180,7 +180,10 @@ def merge_data(filepaths, angle_step=0, ccw=False, offset=(0,0,0), up_axis="Z", 
     pointcloud = remove_NaN(pointcloud)
 
     if as_pcd:
-        return pcd_from_np(pointcloud)
+        pcd = pcd_from_np(pointcloud)
+        if estimate_normals:
+            pcd = estimate_point_normals(pcd, radius=1, max_nn=30)
+        return pcd
     else:
         return pointcloud
 
@@ -286,8 +289,8 @@ if __name__ == "__main__":
 
     opengl_fallback()
 
-    filepaths = list_files("data/scan1", type='npy')
-    pcd = merge_data(filepaths, angle_step=0.25, offset=(0, 2, -4), up_axis="Z", columns="XZI", as_pcd=True)
+    filepaths = list_files("data", type='npy')
+    pcd = merge_data(filepaths, angle_step=0.48464451, offset=(0, -0.374, -0.102), up_axis="Z", columns="XZI", as_pcd=True)
 
     export_pointcloud(pcd, "export/3d-scan", type="e57")
     visualize([pcd], unlit=True)

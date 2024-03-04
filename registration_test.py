@@ -11,7 +11,7 @@ import time
 
 from lib.pointcloud import set_verbosity, export_pointcloud, get_transform_vectors, transform, estimate_point_normals
 from lib.registration import fpfh_from_pointcloud, global_registration, ICP_registration
-from lib.visualization import visualize
+from lib.visualization import visualize, visualize_simple
 
 
 # # GROUND-TRUTH
@@ -47,8 +47,12 @@ source_fpfh = fpfh_from_pointcloud(source_down, radius=voxel_size*5, max_nn=100)
 target_down = estimate_point_normals(target.voxel_down_sample(voxel_size), radius=voxel_size*2, max_nn=30)
 target_fpfh = fpfh_from_pointcloud(target_down, radius=voxel_size*5, max_nn=100)
 
-visualize([source, target], uniform_colors=True)
-visualize([source_down, target_down], uniform_colors=True)
+
+view={"zoom": 0.25, "front": (-30, 20, 20), "lookat": (5, 2, 2), "up": (0, -1, 0)}
+
+visualize([source, target], uniform_colors=True, view=view)
+visualize([source_down, target_down], uniform_colors=True, view=view)
+
 
 
 ########################################
