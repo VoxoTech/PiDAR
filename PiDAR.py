@@ -66,8 +66,8 @@ set_gain = 1
 awb_thres=0.01
 
 hsteps = 180 / h_res
-# packages_per_revolution =  58  # round(4500 / 12 / 6.43)
-# max_packages = hsteps * packages_per_revolution
+packages_per_revolution =  58  # round(4500 / 12 / 6.43)
+max_packages = hsteps * packages_per_revolution
 
 
 # calibrate camera
@@ -112,7 +112,7 @@ try:
 
     # 180° SCAN
     if enable_lidar:
-        lidar.read_loop(callback=move_steps_callback, max_packages=hsteps)  # max_packages ?
+        lidar.read_loop(callback=move_steps_callback, max_packages=max_packages)  #  TODO: hsteps?
 
         stepper.move_steps(steps)  # last step to complete 180°
         stepper.move_angle(-180)    # return to 0°
