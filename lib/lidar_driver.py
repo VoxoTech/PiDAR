@@ -188,7 +188,7 @@ class LD06:
         # 3 bytes per sample x 12 samples
         for counter, i in enumerate(range(0, 3 * self.dlength, 3)): 
             self.angle_batch[counter] = ((angleStep * counter + FSA) % 360) * self.deg2rad
-            self.distance_batch[counter] = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big') / 10  # cm
+            self.distance_batch[counter] = int.from_bytes(byte_array[4 + i:6 + i][::-1], 'big')  # mm units
             self.luminance_batch[counter] = byte_array[6 + i]
 
 

@@ -149,7 +149,7 @@ class Visualizer:
     def close(self):
         self.vis.destroy_window()
 
-def visualize(object_list, title="PiDAR", transformation=None, width=1800, height=1000, left=0, view="front", point_size=1.5, unlit=False, backface=True, uniform_colors=False, bgcolor=(0.15,0.15,0.15)):
+def visualize(object_list, title="PiDAR", transformation=None, width=1800, height=1000, left=0, view="front", point_size=1, unlit=False, backface=True, uniform_colors=False, bgcolor=(0.15,0.15,0.15)):
     # Deepcopy to avoid modifying the original data
     if transformation is not None or uniform_colors is True:
         object_list = copy.deepcopy(object_list)

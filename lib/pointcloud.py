@@ -2,9 +2,11 @@ import numpy as np
 import open3d as o3d
 import pye57
 import copy
-import os
 import cv2
+import matplotlib
+import threading
 
+from os import path
 from scipy.spatial.transform import Rotation as R
 
 
@@ -12,10 +14,21 @@ from scipy.spatial.transform import Rotation as R
 def set_verbosity():
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)  # .Debug
 
+# colorize pointcloud using matplotlib colormap
+def colormap_pcd(pcd, cmap="viridis", gamma=2.2):
+    r = np.asarray(pcd.colors)[:, 0]
+    r_norm = (r - r.min()) / (r.max() - r.min())
+    r_corrected = r_norm**(gamma)
+    colors = matplotlib.colormaps[cmap](r_corrected)    # Map the normalized color channel to the color map
+    if colors.shape[1] == 4:
+        colors = colors[:, :3]                          # Remove the alpha channel if present
+    pcd.colors = o3d.utility.Vector3dVector(colors)
+    return pcd
+
 # load point cloud from file (3D: pcd, ply, e57 | 2D: csv, npy), return as pcd object or numpy table
 # columns parameter: "XYZ" for 3D, "XZ" for 2D vertical, "I" for intensity or "RGB" for color
 def import_pointcloud(filepath, columns="XYZI", csv_delimiter=",", as_array=False):
-    type = os.path.splitext(filepath)[1][1:]
+    type = path.splitext(filepath)[1][1:]
 
     if type == "pcd" or type == "ply":
         pcd = o3d.io.read_point_cloud(filepath)
@@ -64,18 +77,20 @@ def import_pointcloud(filepath, columns="XYZI", csv_delimiter=",", as_array=Fals
     return pcd
 
 # export point cloud to file (pcd, ply, e57, csv)
-def export_pointcloud(pcd, savepath, type="pcd"):
-    if type == "pcd":
-        o3d.io.write_point_cloud(savepath+"."+type, pcd)
+def export_pointcloud(pcd, filepath, ply_ascii=False, csv_delimiter=","):
+    format = path.splitext(filepath)[1][1:]
+
+    if format == "pcd":
+        o3d.io.write_point_cloud(filename=filepath, pointcloud=pcd)
     
-    elif type == "ply":
-        o3d.io.write_point_cloud(savepath+"."+type, pcd, write_ascii=True, compressed=False)
+    elif format == "ply":
+        o3d.io.write_point_cloud(filename=filepath, pointcloud=pcd, write_ascii=ply_ascii, compressed=True)
 
     # TODO: add support for exporting intensity and RGB colors
     elif type == "csv":
         if not isinstance(pcd, np.ndarray):
             array = np.asarray(pcd.points)
-        np.savetxt(savepath+"."+type, array, delimiter=",")
+        np.savetxt(filepath, array, delimiter=csv_delimiter)
 
     elif type == "e57":
         # if a single point cloud is provided, convert it to a list
@@ -85,7 +100,7 @@ def export_pointcloud(pcd, savepath, type="pcd"):
             pcd_list = [pcd]
 
         # Create an E57 object with write mode
-        e57 = pye57.E57(savepath+"."+type, mode='w')
+        e57 = pye57.E57(filepath, mode='w')
 
         # Write each point cloud to the E57 file as a separate scan
         for pcd in pcd_list:
@@ -105,20 +120,52 @@ def export_pointcloud(pcd, savepath, type="pcd"):
             # Write the point cloud data to the E57 file
             e57.write_scan_raw(data_raw)
         e57.close()
+    
+    print("Export completed.")
+
+def export_pointcloud_threaded(pcd, output_path, ply_ascii=False, csv_delimiter=","):
+    export_thread = threading.Thread(target=export_pointcloud, args=(pcd, output_path, ply_ascii, csv_delimiter))
+    export_thread.start()
 
 # Remove rows with NaN values from a numpy array
 def remove_NaN(array):
     return array[~np.isnan(array).any(axis=1)]
 
 # estimate normals for a point cloud
-def estimate_point_normals(pcd, radius=0.1, max_nn=30):
+def estimate_point_normals(pcd, radius=1, max_nn=30, center=(0,0,0)):
     KD_search_param = o3d.geometry.KDTreeSearchParamHybrid(radius=radius, max_nn=max_nn)
     pcd.estimate_normals(search_param=KD_search_param)
+    pcd.orient_normals_towards_camera_location(camera_location=center)
     return pcd
+
+# load list of point cloud files and merge them by angle, return numpy array
+def merge_2D_points(filepaths, angle_step=0, ccw=False, offset=(0,0,0), up_vector=(0,0,1), columns="XZI", csv_delimiter=","):
+    # init result object with (X,Y,Z, intensity)
+    pointcloud = np.zeros((1, 4))
+    angle = 0
+
+    for filepath in filepaths:
+        points2d = import_pointcloud(filepath, columns, csv_delimiter, as_array=True)
+
+        # insert 3D Y=0 after column 0 so 2D-Y becomes 3D-Z (Z-up: image is now vertical)
+        points3d = np.insert(points2d, 1, values=0, axis=1)
+
+        points3d = rotate_3D(points3d, angle, translation_vector=offset, rotation_axis=np.array(up_vector))
+        pointcloud = np.append(pointcloud, points3d, axis=0)
+
+        if ccw:
+            angle += angle_step
+        else:
+            angle -= angle_step
+    
+    # Remove rows with NaN values
+    pointcloud = remove_NaN(pointcloud)
+
+    return pointcloud
 
 # convert numpy array to open3d point cloud
 # supports 2D and 3D points, intensity and RGB colors
-def pcd_from_np(array, columns="XYZI"):
+def pcd_from_np(array, columns="XYZI", estimate_normals=True):
     columns = columns.upper()
     zeros = np.zeros((array.shape[0], 1))
     pcd = o3d.geometry.PointCloud()
@@ -140,53 +187,18 @@ def pcd_from_np(array, columns="XYZI"):
         else:
             raise ValueError("Unsupported point cloud type: " + type)
     
+    if estimate_normals:
+        pcd = estimate_point_normals(pcd, radius=10, max_nn=30)
+
     # colors
     if "I" in columns:  # type == "XYZI" -> array.shape[1] == 4:
         intensities = array[:, color_i] / 255  # normalize intensity values
         pcd.colors = o3d.utility.Vector3dVector(np.column_stack([intensities, intensities, intensities]))
+
     elif "RGB" in columns:
         pcd.colors = o3d.utility.Vector3dVector(array[:, color_i:color_i+3] / 255)
 
     return pcd
-
-# load list of point cloud files and merge them by angle.
-# returns pcd or numpy array
-def merge_data(filepaths, angle_step=0, ccw=False, offset=(0,0,0), up_axis="Z", columns="XZI", csv_delimiter=",", as_pcd=True, estimate_normals=True):
-    if up_axis.upper() == "X":
-        rotation_axis = np.array([1, 0, 0])
-    elif up_axis.upper() == "Y":
-        rotation_axis = np.array([0, 1, 0])
-    else:  # up_axis.upper() == "Z":
-        rotation_axis = np.array([0, 0, 1])
-
-    # init result object with (X,Y,Z, intensity)
-    pointcloud = np.zeros((1, 4))
-    angle = 0
-
-    for filepath in filepaths:
-        points2d = import_pointcloud(filepath, columns, csv_delimiter, as_array=True)
-
-        # insert 3D Y=0 after column 0 so 2D-Y becomes 3D-Z (Z-up: image is now vertical)
-        points3d = np.insert(points2d, 1, values=0, axis=1)
-
-        points3d = rotate_3D(points3d, angle, translation_vector=offset, rotation_axis=rotation_axis)
-        pointcloud = np.append(pointcloud, points3d, axis=0)
-
-        if ccw:
-            angle += angle_step
-        else:
-            angle -= angle_step
-    
-    # Remove rows with NaN values
-    pointcloud = remove_NaN(pointcloud)
-
-    if as_pcd:
-        pcd = pcd_from_np(pointcloud)
-        if estimate_normals:
-            pcd = estimate_point_normals(pcd, radius=1, max_nn=30)
-        return pcd
-    else:
-        return pointcloud
 
 
 ###########################################
@@ -267,7 +279,7 @@ def get_transform_vectors(transform_M):
     return translation, euler_angles
 
 # apply translation and rotation to open3d point cloud
-def transform(pcd, transformation=None, translate=None, euler_rotate_deg=None, pivot=(0,0,0)):
+def transform(pcd, transformation=None, translate=None, scale=None, euler_rotate_deg=None, pivot=(0,0,0)):
     pcd_temp = copy.deepcopy(pcd)
     
     if transformation is not None:
@@ -280,6 +292,9 @@ def transform(pcd, transformation=None, translate=None, euler_rotate_deg=None, p
         euler_rotate_rad = np.deg2rad(euler_rotate_deg)
         rotation_matrix = pcd_temp.get_rotation_matrix_from_xyz(euler_rotate_rad)
         pcd_temp.rotate(rotation_matrix, center=pivot)
+    
+    if scale is not None:
+        pcd_temp.scale(scale, center=pivot)
 
     return pcd_temp
 
@@ -391,10 +406,14 @@ if __name__ == "__main__":
 
     opengl_fallback()
 
-    filepaths = list_files("data", type='npy')
-    pcd = merge_data(filepaths, angle_step=0.48464451, offset=(0, -0.374, -0.102), up_axis="Z", columns="XZI", as_pcd=True)
+    scan_id = "scan_01"
+    output_type = "ply" # ply or e57
 
-    export_pointcloud(pcd, "export/3d-scan", type="e57")
+    filepaths = list_files(f"data/{scan_id}", type='npy')
+    array_3D = merge_2D_points(filepaths, angle_step=0.48464451, offset=(0, -0.374, -0.102), up_vector=(0,0,1), columns="XZI")
+    pcd = pcd_from_np(array_3D, estimate_normals=True)
+    
+    export_pointcloud(pcd, f"export/{scan_id}.{output_type}")
     visualize([pcd], unlit=True)
 
 

@@ -11,7 +11,7 @@ import time
 
 from lib.pointcloud import set_verbosity, export_pointcloud, get_transform_vectors, transform, estimate_point_normals
 from lib.registration import fpfh_from_pointcloud, global_registration, ICP_registration
-from lib.visualization import visualize, visualize_simple
+from lib.visualization import visualize # visualize_simple
 
 
 # # GROUND-TRUTH
@@ -48,8 +48,7 @@ target_down = estimate_point_normals(target.voxel_down_sample(voxel_size), radiu
 target_fpfh = fpfh_from_pointcloud(target_down, radius=voxel_size*5, max_nn=100)
 
 
-view={"zoom": 0.25, "front": (-30, 20, 20), "lookat": (5, 2, 2), "up": (0, -1, 0)}
-
+view={"zoom": 0.5, "front": (0, 0, -1), "lookat": (2, 2, 1.5), "up": (0, -1, 0)}
 visualize([source, target], uniform_colors=True, view=view)
 visualize([source_down, target_down], uniform_colors=True, view=view)
 
@@ -65,10 +64,10 @@ visualize([source_down, target_down], uniform_colors=True, view=view)
 
 # print(f"FAST global registration took {time.time() - start:.3f} sec.")
 # # print(reg_fast)
-# visualize([source_down, target_down], transformation=reg_fast.transformation, uniform_colors=True)
+# visualize([source_down, target_down], transformation=reg_fast.transformation, uniform_colors=True, view=view)
 
 # # print(evaluate_registration(source, target, icp_threshold, transform=reg_ransac.transformation))
-# visualize([source, target], transformation=reg_fast.transformation, uniform_colors=True)
+# visualize([source, target], transformation=reg_fast.transformation, uniform_colors=True, view=view)
 
 
 # ########################################
@@ -86,7 +85,7 @@ ransac_translation, ransac_euler = get_transform_vectors(reg_ransac.transformati
 print(f"[RANSAC] translate:\t{ransac_translation})")
 print(f"[RANSAC] rotate:\t{ransac_euler})")
 
-visualize([source, target], transformation=reg_ransac.transformation, uniform_colors=True)
+visualize([source, target], transformation=reg_ransac.transformation, uniform_colors=True, view=view)
 
 
 ########################################
@@ -99,7 +98,7 @@ visualize([source, target], transformation=reg_ransac.transformation, uniform_co
 # print(f"P2P ICP took {time.time() - start:.3f} sec.")
 # # print(reg_p2p)
 
-# visualize([source, target], transformation=reg_p2p.transformation, uniform_colors=True)
+# visualize([source, target], transformation=reg_p2p.transformation, uniform_colors=True, view=view)
 
 
 # ########################################
@@ -115,10 +114,10 @@ icp_translation, icp_euler = get_transform_vectors(reg_p2l.transformation)
 print(f"[P2L ICP] translate:\t{icp_translation}")
 print(f"[P2L ICP] rotate:\t{icp_euler}")
 
-visualize([source, target], transformation=reg_p2l.transformation, uniform_colors=True)
+visualize([source, target], transformation=reg_p2l.transformation, uniform_colors=True, view=view)
 
 
 ########################################
 # EXPORT TRANSFORMED POINT CLOUDS
 transformed_source = transform(source, transformation=reg_p2l.transformation)
-export_pointcloud([transformed_source, target], "export/registration_test", type="e57")
+export_pointcloud([transformed_source, target], "export/registration_test.e57")
