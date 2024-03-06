@@ -1,6 +1,9 @@
 from os import path
+import cv2
+import open3d as o3d
+import numpy as np
 
-from lib.pointcloud import merge_2D_points, pcd_from_np, transform, colormap_pcd, export_pointcloud_threaded
+from lib.pointcloud import merge_2D_points, pcd_from_np, transform, angular_lookup, angular_from_cartesian, export_pointcloud_threaded # colormap_pcd
 from lib.file_utils import list_files
 from lib.visualization import opengl_fallback, visualize
 
@@ -10,21 +13,33 @@ opengl_fallback()
 scan_id = "scan_01"
 output_type = "ply" # ply or e57
 output_path = f"export/{scan_id}.{output_type}"
-as_ascii = True
-scale = 0.001  # 0.001 for mm -> m
+pano = cv2.imread("export/pano_01.jpg")
+as_ascii = False
+scene_scale = 0.01   # 0.001 for mm -> m
+pano_scale = 0.5     # image size 50 % 
+y_offset = -0.374    # -37.4 mm
+z_offset = 0.2       # offset in mm * -1
+z_rotate = -15.5     # degrees
+
 
 filepaths = list_files(path.join("data", scan_id), type='npy')
-array_3D = merge_2D_points(filepaths, angle_step=0.48464451, offset=(0, -0.374, -0.102), up_vector=(0,0,1), columns="XZI")
+array_3D = merge_2D_points(filepaths, angle_step=0.48464451, offset=(0, y_offset, 0), up_vector=(0,0,1), columns="XZI")
 pcd = pcd_from_np(array_3D, estimate_normals=True)
+pcd = transform(pcd, translate=(0, 0, z_offset))
 print("Merge completed.")
 
-# colorize pointcloud
-pcd = colormap_pcd(pcd, gamma=8, cmap="viridis")
-
 # scale pointcloud
-if scale !=1:
-    pcd = transform(pcd, scale=scale)
+if scene_scale !=1:
+    pcd = transform(pcd, scale=scene_scale)
+
+# # colorize pointcloud
+# pcd = colormap_pcd(pcd, gamma=8, cmap="viridis")
+
+# ANGULAR LOOKUP
+angular_points = angular_from_cartesian(np.asarray(pcd.points))
+colors = angular_lookup(angular_points, pano, scale=pano_scale, z_rotate=z_rotate)
+pcd.colors = o3d.utility.Vector3dVector(np.asarray(colors))
 
 # visualize while exporting
 export_pointcloud_threaded(pcd, output_path, ply_ascii=as_ascii)
-visualize([pcd], view="front")
+visualize([pcd], view="front", unlit=True)
