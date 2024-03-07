@@ -85,7 +85,7 @@ stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_AN
 
 # initialize lidar
 if enable_lidar:
-    lidar   = LD06(port=PORT, pwm_dc = PWM_DC, visualization=VIS, offset=OFFSET,format=FORMAT, dtype=DTYPE, data_dir=DATA_DIR, out_len=OUT_LEN)
+    lidar = LD06(port=PORT, pwm_dc = PWM_DC, visualization=VIS, offset=OFFSET,format=FORMAT, dtype=DTYPE, data_dir=DATA_DIR, out_len=OUT_LEN)
     
     # callback function for lidar.read_loop()
     def move_steps_callback():
@@ -104,7 +104,8 @@ try:
     if enable_camera:
         for i in range(IMGCOUNT):
             # take HighRes image using fixed values
-            imgpath = take_photo(exposure_time=exposure_time, gain=gain, awbgains=awbgains, denoise="cdn_hq", save_raw=raw, blocking=True)
+            imgpath = f"image_{round(lidar.z_angle, 2)}.jpg"
+            take_photo(path=imgpath, exposure_time=exposure_time, gain=gain, awbgains=awbgains, denoise="cdn_hq", save_raw=raw, blocking=True)
             imglist.append(imgpath)
 
             stepper.move_angle(360/IMGCOUNT)

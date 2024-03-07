@@ -89,9 +89,9 @@ def angles_from_filenames(data_dir, name="image", ext = "jpg"):
 
 if __name__ == "__main__":
 
-    DATA_DIR = "data/scan_02"
+    DATA_DIR = "data/scan_03"
 
-    # # convert all npy to csv files
+    # # CONVERT ALL .npy FILES TO .csv
     # csv_from_npy_dir(DATA_DIR)
 
     # extract angles from filenames

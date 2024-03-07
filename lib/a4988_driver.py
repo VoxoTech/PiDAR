@@ -48,6 +48,9 @@ class A4988:
 
     def get_steps_for_angle(self, angle):
         return int((angle / self.step_angle) * self.microsteps * self.gear_ratio)
+    
+    def get_angle_for_steps(self, steps):
+        return (steps / (self.microsteps * self.gear_ratio)) * self.step_angle
 
     def step(self):
         GPIO.output(self.step_pin, True)
@@ -64,7 +67,7 @@ class A4988:
             self.step()
         
         # update current angle
-        self.current_angle += self.get_steps_for_angle(steps)
+        self.current_angle += self.get_angle_for_steps(steps)
 
     def move_angle(self, angle):
         steps = self.get_steps_for_angle(angle)

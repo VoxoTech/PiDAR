@@ -80,7 +80,7 @@ def hugin_stitch(files, template=None, width=None, output_path=None, nice=19, cl
 
 
     # start stitching as non-blocking thread with low priority
-    cmd_string = ['nice', str(nice), 'hugin_executor', '--stitching', f'--prefix={output_path}', project_path]
+    cmd_string = ['nice', '-n', str(nice), 'hugin_executor', '--stitching', f'--prefix={output_path}', project_path]
     retval = subprocess.Popen(cmd_string)
 
     # # check returncode if stitching was successful

@@ -11,7 +11,7 @@ from lib.visualization import opengl_fallback, visualize
 opengl_fallback()
 
 data_dir = "data"
-scan_id = "scan_02"
+scan_id = "scan_03"
 output_type = "ply" # ply or e57
 output_path = f"export/{scan_id}.{output_type}"
 pano = cv2.imread("export/pano_02.jpg")
