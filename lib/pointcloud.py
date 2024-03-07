@@ -10,10 +10,6 @@ from os import path
 from scipy.spatial.transform import Rotation as R
 
 
-# set verbosity level to suppress Open3D debug messages
-def set_verbosity():
-    o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)  # .Debug
-
 # colorize pointcloud using matplotlib colormap
 def colormap_pcd(pcd, cmap="viridis", gamma=2.2):
     r = np.asarray(pcd.colors)[:, 0]
@@ -360,11 +356,10 @@ def angular_lookup(angular_points, pano, scale=1, degrees=False, z_rotate=0, as_
 
 if __name__ == "__main__":
     from file_utils import list_files
-    from pointcloud import set_verbosity, import_pointcloud
+    from pointcloud import import_pointcloud
     from visualization import opengl_fallback, visualize
 
     opengl_fallback()
-    set_verbosity()
 
 
     # MERGE 2D POINTS

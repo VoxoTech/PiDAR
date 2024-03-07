@@ -11,8 +11,8 @@ from lib.pano_utils import hugin_stitch
 from lib.file_utils import make_dir
 
 
-# allow access to serial port on Raspberry Pi
-allow_serial()
+# # legacy code: allow access to serial port on Raspberry Pi
+# allow_serial()
 
 DEBUG = False
 

@@ -111,6 +111,7 @@ class LD06:
             try:
                 if self.out_i == self.out_len:
                     # print("speed:", round(self.speed, 2))
+                    print("z_angle:", round(self.z_angle, 2))
                     
                     if callback is not None:
                         callback()

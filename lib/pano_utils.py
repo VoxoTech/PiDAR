@@ -47,7 +47,7 @@ def hugin_modify(project_path, new_project_path, width=6800):
     with open(new_project_path, 'w') as file:
         file.writelines(lines)
 
-def hugin_stitch(files, template=None, width=None, output_path=None, cleanup=False):
+def hugin_stitch(files, template=None, width=None, output_path=None, nice=19, cleanup=False):
 
     project_dir = "panocam/projects"
     tmp_dir = "panocam/tmp"
@@ -79,8 +79,8 @@ def hugin_stitch(files, template=None, width=None, output_path=None, cleanup=Fal
         hugin_modify(project_path, project_path, width=width)
 
 
-    # start stitching
-    cmd_string = ['hugin_executor', '--stitching', f'--prefix={output_path}', project_path]
+    # start stitching as non-blocking thread with low priority
+    cmd_string = ['nice', str(nice), 'hugin_executor', '--stitching', f'--prefix={output_path}', project_path]
     retval = subprocess.Popen(cmd_string)
 
     # # check returncode if stitching was successful

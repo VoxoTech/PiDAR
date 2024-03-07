@@ -19,7 +19,14 @@ except:
     from platform_utils import get_platform
 
 
+# set verbosity level to suppress Open3D debug messages
+def set_verbosity():
+    o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)  # .Debug
+
+
 def opengl_fallback(check=True):
+    set_verbosity()  # suppress OpenGL warnings
+
     # disable OpenGL on Raspberry Pi
     if not check or get_platform() == 'RaspberryPi':
         use_software_rendering = '1'

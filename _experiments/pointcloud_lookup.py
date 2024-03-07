@@ -48,8 +48,8 @@ def angular_lookup(angular_points, pano, scale=1, degrees=False, z_rotate=0, as_
 
 
 if __name__ == "__main__":
-    from lib.pointcloud import import_pointcloud, transform, set_verbosity 
-    from lib.visualization import visualize
+    from lib.pointcloud import import_pointcloud, transform
+    from lib.visualization import visualize, set_verbosity
 
 
     set_verbosity()

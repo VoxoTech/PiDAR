@@ -9,9 +9,9 @@ https://www.open3d.org/docs/latest/tutorial/Basic/icp_registration.html
 import open3d as o3d
 import time
 
-from lib.pointcloud import set_verbosity, export_pointcloud, get_transform_vectors, transform, estimate_point_normals
+from lib.pointcloud import export_pointcloud, get_transform_vectors, transform, estimate_point_normals
 from lib.registration import fpfh_from_pointcloud, global_registration, ICP_registration
-from lib.visualization import visualize # visualize_simple
+from lib.visualization import set_verbosity, visualize # visualize_simple
 
 
 # # GROUND-TRUTH

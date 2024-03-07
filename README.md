@@ -131,17 +131,28 @@ temporary solution:
 
     sudo chmod a+rw /dev/ttyS0
 
-make it permanent by disabling password for chmod:  
+### old solution: make it permanent by disabling password for chmod:  
 
     sudo visudo
     pi ALL=(ALL:ALL) NOPASSWD: /usr/bin/chmod a+rw /dev/ttyS0
 
-then execute the temporary solution from python:
+then execute the _temporary_ solution from python:
 
     import subprocess
     command = "sudo chmod a+rw /dev/ttyS0"
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
+
+### new solution: grant permissions to the serial port using udev rules 
+
+(TODO: check and remove old!)
+- forget about `visudo` and the subprocess call above.
+- Open a terminal and run the following command: `sudo nano /etc/udev/rules.d/50-ttyS0.rules`
+- Write the following line in the file and save it: `KERNEL=="ttyS0",GROUP="dialout",MODE="0660"`
+- Run the following command to check if your user is a member of the dialout group: `groups`
+- If you see `dialout` in the output, you are already a member of the group. If not, run the following command to add your user to the group: `sudo usermod -a -G dialout pi`
+- Run the following command to reload the udev rules: `sudo udevadm control --reload-rules`
+- Unplug and replug the serial device, or reboot the system, to apply the changes.
 
 ## Hardware PWM on Raspberry Pi
 enable GPIO_18 (PWM0) and GPIO_19 (PWM1)
