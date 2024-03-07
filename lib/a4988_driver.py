@@ -10,7 +10,7 @@ import RPi.GPIO as GPIO     # type: ignore
 from time import sleep
 
 class A4988:
-    def __init__(self, dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=1.0, init_angle=0, verbose=False):
+    def __init__(self, dir_pin, step_pin, ms_pins, delay=0.0001, step_angle=1.8, microsteps=16, gear_ratio=1.0, verbose=False):
         # Disable warnings
         GPIO.setwarnings(verbose) 
 
@@ -41,7 +41,7 @@ class A4988:
             for pin, state in zip(self.ms_pins, self.step_modes[self.microsteps]):
                 GPIO.output(pin, state)
 
-        self.current_angle = init_angle
+        self.current_angle = 0
 
     def set_direction(self, direction):
         GPIO.output(self.dir_pin, direction)
@@ -50,7 +50,7 @@ class A4988:
         return int((angle / self.step_angle) * self.microsteps * self.gear_ratio)
     
     def get_angle_for_steps(self, steps):
-        return (steps / (self.microsteps * self.gear_ratio)) * self.step_angle
+        return (steps / (self.microsteps * self.gear_ratio)) * self.step_angle / 2  # TODO: HACK, /2 should not be there!
 
     def step(self):
         GPIO.output(self.step_pin, True)
@@ -67,7 +67,7 @@ class A4988:
             self.step()
         
         # update current angle
-        self.current_angle += self.get_angle_for_steps(steps)
+        self.current_angle += self.get_angle_for_steps(steps)   # TODO: use direction for +/- sign
 
     def move_angle(self, angle):
         steps = self.get_steps_for_angle(angle)
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     MS_TABLE = {16: 11885, 8: 5942, 4: 2971}    # table of microsteps per revolution
     MS360 = MS_TABLE[MICROSTEPS]                # microsteps per revolution
 
-    TARGET_RES = 0.5                            # desired resolution in degrees
+    TARGET_RES = 1                            # desired resolution in degrees
     STEP_DELAY = 0.0005
     GEAR_RATIO = 3.7142857
     STEPPER_RESOLUTION = 200
@@ -123,19 +123,34 @@ if __name__ == "__main__":
     # stepper.move_steps(MS360)
     
     try:
-        # 0-180° SCAN
-        for z_angle in np.arange(0, 180, h_res):
-            stepper.move_steps(steps)
-            sleep(scan_delay)                   # duration of one lidar duration
-        stepper.move_steps(steps)               # n+1 step
+        # # 0-180° SCAN
+        # for z_angle in np.arange(0, 180, h_res):
+        #     stepper.move_steps(steps)
+        #     sleep(scan_delay)                   # duration of one lidar duration
+        # stepper.move_steps(steps)               # n+1 step
 
-        sleep(1)
+        # sleep(1)
 
         # 180-360° JUST SHOOTING PHOTOS
         for i in range(4):
-            stepper.move_angle(45)
-            print(f"Photo {i+1} at {stepper.current_angle}°")
+            stepper.move_angle(10)
+            print(f"Photo {i+1} at {round(stepper.current_angle, 2)}°")
             sleep(1)                            # delay for photo
+
+        ''' TODO ??
+        stepper.move_angle(45) :
+        Photo 1 at 67.49°
+        Photo 2 at 134.98°
+        Photo 3 at 202.47°
+        Photo 4 at 269.96°
+
+
+        stepper.move_angle(10) :
+        Photo 1 at 15.0°
+        Photo 2 at 30.0°
+        Photo 3 at 44.99°
+        Photo 4 at 59.99°
+        '''
 
     finally:
         stepper.close()

@@ -104,12 +104,15 @@ try:
     if enable_camera:
         for i in range(IMGCOUNT):
             # take HighRes image using fixed values
-            imgpath = f"image_{round(lidar.z_angle, 2)}.jpg"
+            imgpath = f"images/image_{round(stepper.get_current_angle(), 2)}.jpg"
             take_photo(path=imgpath, exposure_time=exposure_time, gain=gain, awbgains=awbgains, denoise="cdn_hq", save_raw=raw, blocking=True)
             imglist.append(imgpath)
 
             stepper.move_angle(360/IMGCOUNT)
 
+        # turn back to 0°
+        sleep(1)
+        stepper.move_angle(-360)
 
     # 180° SCAN
     if enable_lidar:
