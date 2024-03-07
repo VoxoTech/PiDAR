@@ -11,8 +11,8 @@ from lib.pano_utils import hugin_stitch
 from lib.file_utils import make_dir
 
 
-# # legacy code: allow access to serial port on Raspberry Pi
-# allow_serial()
+# legacy code: allow access to serial port on Raspberry Pi
+allow_serial()
 
 DEBUG = False
 
@@ -31,7 +31,7 @@ PWM_DC = 0.4                               # duty cycle: 0.23 = 6.5 Hz, 0.1 = 4 
 OFFSET = np.pi / 2                          # = 90°
 FORMAT = 'npy'                              # 'npy' or 'csv' or None
 DTYPE = np.float64                          # np.float64 or np.float32
-DATA_DIR = "data"
+DATA_DIR = "data/scan_03"
 VIS = None                                  # plot_2D() or None
 OUT_LEN = 40                                # visualize after every nth batch
 

@@ -65,16 +65,16 @@ def init_pwm_MCU(pin="GP2", frequency=30000):
     return PWMOut(boardpin(pin), frequency=frequency)
 
 
-# # legacy code: allow access to serial port on Raspberry Pi
-# def allow_serial():
-#     if get_platform() == "RaspberryPi":
-#         # Use subprocess to allow serial communication on Raspberry Pi
-#         sudo_command = "sudo chmod a+rw /dev/ttyS0"
-#         process = subprocess.Popen(sudo_command.split(), stdout=subprocess.PIPE)
-#         output, error = process.communicate()
-#         return output, error
-#     else:
-#         print("[WARNING] plattform is no Pi.")
+# legacy code: allow access to serial port on Raspberry Pi
+def allow_serial():
+    if get_platform() == "RaspberryPi":
+        # Use subprocess to allow serial communication on Raspberry Pi
+        sudo_command = "sudo chmod a+rw /dev/ttyS0"
+        process = subprocess.Popen(sudo_command.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        return output, error
+    else:
+        print("[WARNING] plattform is no Pi.")
 
 
 if __name__ == "__main__":
