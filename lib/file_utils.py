@@ -9,20 +9,12 @@ from glob import glob
 
 
 def save_data(filepath, np_array):
-    dirname, filename = os.path.split(filepath)
-    basename, format = os.path.splitext(filename)
-    format = format.lstrip('.')
+    ext = os.path.splitext(filepath)[1].lstrip('.')
 
-    # if filename is *.npy, create a new filename with a timestamp
-    if basename == '*':
-        filename = f"{dirname}/{time.time()}.{format}"
-    else:
-        filename = filepath
-
-    if format == 'npy':
-        t = threading.Thread(target=save_npy, args=(filename, np_array))
-    else:  # format == 'csv':
-        t = threading.Thread(target=save_csv, args=(filename, np_array))
+    if ext == 'csv':
+        t = threading.Thread(target=save_csv, args=(filepath, np_array))
+    else:  # format == 'npy':
+        t = threading.Thread(target=save_npy, args=(filepath, np_array))
     t.start()
 
 def save_csv(filepath, points_2d, csv_delimiter=','):
@@ -62,7 +54,7 @@ def make_dir(dir):
     # if not os.path.exists(dir):
     os.makedirs(dir, exist_ok=True)
 
-def angles_from_filenames(data_dir, name="image", ext = "jpg"):
+def angles_from_filenames(data_dir, name="plane", ext = "jpg"):
     # create a list of files
     files = glob(os.path.join(data_dir, f"*.{ext}"))
     files = sorted(files)
@@ -90,12 +82,13 @@ def angles_from_filenames(data_dir, name="image", ext = "jpg"):
 if __name__ == "__main__":
 
     DATA_DIR = "data/scan_03"
+    make_dir(DATA_DIR)
 
     # # CONVERT ALL .npy FILES TO .csv
     # csv_from_npy_dir(DATA_DIR)
 
     # extract angles from filenames
-    files, angles = angles_from_filenames(DATA_DIR, name="image", ext="npy")
+    files, angles = angles_from_filenames(DATA_DIR, name="plane", ext="npy")
     for i, (file, angle) in enumerate(zip(files, angles)):
         print(f"{i:03d}: {file} -> {angle:.2f}")
     

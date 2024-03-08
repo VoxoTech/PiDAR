@@ -8,7 +8,7 @@ https://storage.googleapis.com/mauser-public-images/prod_description_document/20
 import numpy as np
 import serial
 import os
-from time import sleep
+import time
 
 try:
     # running from project root
@@ -24,7 +24,7 @@ class LD06:
     def __init__(self, port=None, pwm_channel=0, pwm_dc=0.4, baudrate=230400, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
         self.platform           = get_platform()
 
-        self.z_angle            = 0  # gets updated externally by A4988 driver
+        self.z_angle            = None  # gets updated externally by A4988 driver
 
         # constants
         self.start_byte         = bytes([0x54])
@@ -104,21 +104,27 @@ class LD06:
                 print("Closing...")
             self.visualization.fig.canvas.mpl_connect('close_event', on_close)
 
-        # TODO: hack; wait for other processes to calm down
-        sleep(2)
+        # # TODO: hack; wait for other processes to calm down
+        # time.sleep(2)
 
         while self.serial_connection.is_open and (max_packages is None or loop_count <= max_packages):
             try:
                 if self.out_i == self.out_len:
-                    # print("speed:", round(self.speed, 2))
-                    print("z_angle:", round(self.z_angle, 2))
-                    
                     if callback is not None:
                         callback()
+                    
+                    if self.z_angle is not None:
+                        print("speed:", round(self.speed, 2), "| z_angle:", round(self.z_angle, 2))
                 
                     # SAVE DATA
                     if self.format is not None:
-                        filepath = os.path.join(self.data_dir, f"image_{round(self.z_angle, 2)}.{self.format}")
+                        if self.z_angle is not None:
+                            fname = f"plane_{round(self.z_angle, 2)}"
+                        else:
+                            # use current timestamp if z_angle is not available
+                            fname = f"{time.time()}"
+
+                        filepath = os.path.join(self.data_dir, f"{fname}.{self.format}")
                         save_data(filepath, self.points_2d)
 
                     # VISUALIZE
@@ -213,12 +219,15 @@ def my_callback():
 
 
 if __name__ == "__main__":
+    from file_utils import make_dir
 
     visualize = True
+    DATA_DIR = "data/scan_03"
+    make_dir(DATA_DIR)
 
     if visualize:
         from matplotlib_2D import plot_2D
-        visualization = plot_2D()
+        visualization = plot_2D(plotrange=1000)
     else:
         import threading
         visualization = None
@@ -229,23 +238,32 @@ if __name__ == "__main__":
     max_packages = hsteps * packages_per_revolution
 
 
-    lidar = LD06(port = '/dev/ttyS0',  # 'COM8',
+    lidar = LD06(port = 'COM8',  # '/dev/ttyS0',  
                  pwm_dc = 0.4,
                  offset = np.pi / 2, 
                  format = 'npy',
-                 dtype =np.float64,
-                 data_dir ="data",
+                 dtype = np.float64,
+                 data_dir = DATA_DIR,
                  visualization = visualization,
-                 out_len = packages_per_revolution)  
+                 out_len = packages_per_revolution)
 
     try:
         if lidar.serial_connection.is_open:
 
             if visualize:
-                lidar.read_loop(callback=my_callback, max_packages=max_packages)
+                lidar.read_loop()
+                # lidar.read_loop(callback=my_callback, max_packages=max_packages)
             else:
                 read_thread = threading.Thread(target=lidar.read_loop, kwargs={'callback': my_callback, 'max_packages': max_packages})
                 read_thread.start()
                 read_thread.join()
     finally:
         lidar.close()
+
+
+    # # STL27L
+    # lidar = STL27L(port = 'COM6',
+    #                format = 'npy',
+    #                data_dir = DATA_DIR,
+    #                visualization = visualization)
+    # lidar.read_loop()

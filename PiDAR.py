@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO  # type: ignore
 import numpy as np
-from time import sleep
+import time
 
 from lib.platform_utils import allow_serial
 # from lib.matplotlib_2D import plot_2D
@@ -94,7 +94,7 @@ if enable_lidar:
 
     if not enable_camera:
         # wait for lidar to lock rotational speed
-        sleep(3)
+        time.sleep(2)
 
 
 # MAIN
@@ -111,7 +111,7 @@ try:
             stepper.move_angle(360/IMGCOUNT)
 
         # turn back to 0°
-        sleep(1)
+        time.sleep(0.5)
         stepper.move_angle(-360)
 
     # 180° SCAN

@@ -178,6 +178,8 @@ the stitching script is inspired by [StereoPi](https://medium.com/stereopi/stitc
 
 ## LDRobot LiDAR Units
 
+![LD06 vs. STL27L](mechanical_design/lidar_comparison.jpg)
+
 LD06: 
 - sampling frequency 4500 Hz
 - baudrate 230400
