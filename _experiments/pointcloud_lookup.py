@@ -49,10 +49,10 @@ def angular_lookup(angular_points, pano, scale=1, degrees=False, z_rotate=0, as_
 
 if __name__ == "__main__":
     from lib.pointcloud import import_pointcloud, transform
-    from lib.visualization import visualize, set_verbosity
+    from lib.visualization import opengl_fallback, visualize
 
 
-    set_verbosity()
+    opengl_fallback()
 
     pcd = import_pointcloud("export/scan_01.ply")
     map = cv2.imread("export/pano_01.jpg")

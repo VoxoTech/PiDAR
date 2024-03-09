@@ -370,7 +370,7 @@ if __name__ == "__main__":
     z_rotate = -15.5     # degrees
     z_offset = 0.4       # offset in mm * -1
 
-    filepaths = list_files(f"data/{scan_id}", type='npy')
+    filepaths = list_files(f"data/{scan_id}", ext='npy')
     array_3D = merge_2D_points(filepaths, angle_step=0.48464451, offset=(0, -0.374, 0), up_vector=(0,0,1), columns="XZI")
     pcd = pcd_from_np(array_3D, estimate_normals=True)
     pcd = transform(pcd, translate=(0, 0, z_offset))

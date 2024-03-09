@@ -171,7 +171,7 @@ if __name__ == "__main__":
     from file_utils import list_files
 
     # Get all jpg files in the directory
-    files = list_files("images", type="jpg")
+    files = list_files("images", ext="jpg")
     print(len(files), "images found.")
     
     files = files[0:4]

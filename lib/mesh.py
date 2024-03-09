@@ -1,6 +1,10 @@
+"""
+http://www.open3d.org/docs/latest/tutorial/Advanced/surface_reconstruction.html
+normals: http://www.open3d.org/docs/release/python_api/open3d.geometry.PointCloud.html
+"""
+
 import numpy as np
 import open3d as o3d
-import os
 
 
 def sample_poisson_disk(pcd, count=1000000):
@@ -18,7 +22,6 @@ def mesh_optimize(mesh, count=1000000):
     return mesh
 
 def mesh_from_alpha_shape(pcd,  alpha=0.03):
-    # estimate_mesh_normals(mesh)
     return o3d.geometry.TriangleMesh.create_from_point_cloud_alpha_shape(pcd, alpha)
 
 def mesh_from_ball_pivoting(pcd):
@@ -30,9 +33,11 @@ def mesh_from_ball_pivoting(pcd):
     mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, ball_radii)
     return mesh
 
-def mesh_from_poisson(pcd, depth=9, normal_plane=100, density_threshold=0.1, return_densities=False):
-    pcd.estimate_normals()
-    pcd.orient_normals_consistent_tangent_plane(normal_plane)
+def mesh_from_poisson(pcd, depth=10, k=100, estimate_normals=True, density_threshold=0.1, return_densities=False):
+    if estimate_normals:
+        pcd.estimate_normals()
+        pcd.orient_normals_consistent_tangent_plane(k=k)
+
     mesh, densities = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=depth)
 
     if density_threshold > 0:
@@ -50,24 +55,33 @@ def remove_low_density_vertices(mesh, densities, quantile=0.1):
 
 if __name__ == "__main__":
 
-    bunny = o3d.data.BunnyMesh()
-    mesh  = o3d.io.read_triangle_mesh(bunny.path)
-    estimate_mesh_normals(mesh)
+    # # EXAMPLE 1: BUNNY
+    # bunny = o3d.data.BunnyMesh()
+    # mesh  = o3d.io.read_triangle_mesh(bunny.path)
+    # estimate_mesh_normals(mesh)
 
-    pcd = sample_poisson_disk(mesh, count=5000)
-    o3d.visualization.draw_geometries([mesh, pcd])
+    # pcd = sample_poisson_disk(mesh, count=5000)
+    # o3d.visualization.draw_geometries([mesh, pcd])
+
+
+    # EXAMPLE 2: ICP POINT CLOUDS
+    DemoICPPointClouds = o3d.data.DemoICPPointClouds()
+    path0, path1, path2 = DemoICPPointClouds.paths
+    pcd = o3d.io.read_point_cloud(path0)
+
 
 
     # alpha shape mesh
     mesh = mesh_from_alpha_shape(pcd)
-    estimate_mesh_normals(mesh)
     o3d.visualization.draw_geometries([mesh])
 
     # ball pivoting mesh
     mesh = mesh_from_ball_pivoting(pcd)
-    # mesh = mesh_optimize(mesh, count=1000000)
     o3d.visualization.draw_geometries([mesh])
 
-    # poisson mesh  # TODO: broken with this dataset
-    mesh = mesh_from_poisson(pcd, depth=10, normal_plane=100, density_threshold=0.1)
+    # poisson mesh 
+    mesh = mesh_from_poisson(pcd, depth=10, k=50, estimate_normals=True, density_threshold=0.1)
+
+
+    # mesh = mesh_optimize(mesh, count=1000000)
     o3d.visualization.draw_geometries([mesh])

@@ -222,7 +222,7 @@ if __name__ == "__main__":
     from file_utils import make_dir
 
     visualize = True
-    DATA_DIR = "data/scan_03"
+    DATA_DIR = "data/scan_02"
     make_dir(DATA_DIR)
 
     if visualize:

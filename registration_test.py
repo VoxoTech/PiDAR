@@ -1,25 +1,13 @@
-"""
-http://www.open3d.org/docs/release/tutorial/visualization/non_blocking_visualization.html
-http://www.open3d.org/docs/latest/tutorial/Basic/transformation.html
-
-https://www.open3d.org/docs/latest/tutorial/Advanced/global_registration.html
-https://www.open3d.org/docs/latest/tutorial/Basic/icp_registration.html
-"""
-
 import open3d as o3d
 import time
 
 from lib.pointcloud import export_pointcloud, get_transform_vectors, transform, estimate_point_normals
 from lib.registration import fpfh_from_pointcloud, global_registration, ICP_registration
-from lib.visualization import set_verbosity, visualize # visualize_simple
+from lib.visualization import opengl_fallback, visualize
 
 
-# # GROUND-TRUTH
-# groundtruth_translation = (50, 0, 100)
-# groundtruth_euler       = (0.0, 20.0, 0)
-# # groundtruth_source    = transform(source, translate=translate, euler_rotate_deg=rotate)
 
-set_verbosity()
+opengl_fallback()
 
 voxel_size = 0.05  # meter units
 gr_max_iteration = 1000000
@@ -49,25 +37,10 @@ target_fpfh = fpfh_from_pointcloud(target_down, radius=voxel_size*5, max_nn=100)
 
 
 view={"zoom": 0.5, "front": (0, 0, -1), "lookat": (2, 2, 1.5), "up": (0, -1, 0)}
-visualize([source, target], uniform_colors=True, view=view)
-visualize([source_down, target_down], uniform_colors=True, view=view)
+visualize([source, target], point_colors="uniform", view=view)
+visualize([source_down, target_down], point_colors="uniform", view=view)
 
 
-
-########################################
-# FAST GLOBAL REGISTRATION 
-
-# start = time.time()
-# distance_threshold = voxel_size * 0.5
-# reg_fast = global_registration(source_down, target_down, source_fpfh, target_fpfh, distance_threshold, 
-#                                   use_fast=True, max_iteration=gr_max_iteration, confidence=gr_confidence)
-
-# print(f"FAST global registration took {time.time() - start:.3f} sec.")
-# # print(reg_fast)
-# visualize([source_down, target_down], transformation=reg_fast.transformation, uniform_colors=True, view=view)
-
-# # print(evaluate_registration(source, target, icp_threshold, transform=reg_ransac.transformation))
-# visualize([source, target], transformation=reg_fast.transformation, uniform_colors=True, view=view)
 
 
 # ########################################
@@ -85,20 +58,7 @@ ransac_translation, ransac_euler = get_transform_vectors(reg_ransac.transformati
 print(f"[RANSAC] translate:\t{ransac_translation})")
 print(f"[RANSAC] rotate:\t{ransac_euler})")
 
-visualize([source, target], transformation=reg_ransac.transformation, uniform_colors=True, view=view)
-
-
-########################################
-# # P2P ICP
-
-# start = time.time()
-# reg_p2p = ICP_registration(source, target, icp_threshold, 
-#                               reg_ransac.transformation, use_p2l=False, p2p_max_iteration=p2p_max_iteration)
-
-# print(f"P2P ICP took {time.time() - start:.3f} sec.")
-# # print(reg_p2p)
-
-# visualize([source, target], transformation=reg_p2p.transformation, uniform_colors=True, view=view)
+visualize([source, target], transformation=reg_ransac.transformation, point_colors="uniform", view=view)
 
 
 # ########################################
@@ -114,7 +74,7 @@ icp_translation, icp_euler = get_transform_vectors(reg_p2l.transformation)
 print(f"[P2L ICP] translate:\t{icp_translation}")
 print(f"[P2L ICP] rotate:\t{icp_euler}")
 
-visualize([source, target], transformation=reg_p2l.transformation, uniform_colors=True, view=view)
+visualize([source, target], transformation=reg_p2l.transformation, point_colors="uniform", view=view)
 
 
 ########################################

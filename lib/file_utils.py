@@ -1,5 +1,4 @@
 import os
-import time
 import csv
 import re
 import math
@@ -26,28 +25,28 @@ def save_npy(filepath, points_2d):
     np.save(filepath, points_2d)
 
 def csv_from_npy_dir(dir):
-    npy_files = list_files(dir, type='npy')
+    npy_files = list_files(dir, ext='npy')
     for npy_file in npy_files:
         data = np.load(npy_file)
         csv_file = os.path.splitext(npy_file)[0] + '.csv'
         save_csv(csv_file, data)
 
-def list_files(dir, type=None, recursive=False):
+def list_files(dir, ext=None, recursive=False):
     # from glob import glob
-    # return sorted(glob(os.path.join(dir, '*.'+type)))
+    # return sorted(glob(os.path.join(dir, '*.'+ext)))
 
     filepaths = list()
     for root, dirs, files in os.walk(dir, topdown=True):
         files = sorted(files)
 
         for file in files:
-            if type is None or os.path.splitext(file)[1][1:] == type:  # [1:] just removes the dot in ".jpg"
+            if ext is None or os.path.splitext(file)[1][1:] == ext:  # [1:] just removes the dot in ".jpg"
                 filepath = os.path.join(root, file)
                 filepaths.append(filepath)
             
         if not recursive:
             break
-    print(f"found: {len(filepaths)} {type} files ({len(files)-len(filepaths)} other)")
+    print(f"found: {len(filepaths)} {ext} files ({len(files)-len(filepaths)} other)")
     return filepaths
 
 def make_dir(dir):
@@ -81,7 +80,7 @@ def angles_from_filenames(data_dir, name="plane", ext = "jpg"):
 
 if __name__ == "__main__":
 
-    DATA_DIR = "data/scan_03"
+    DATA_DIR = "data/scan_02"
     make_dir(DATA_DIR)
 
     # # CONVERT ALL .npy FILES TO .csv
