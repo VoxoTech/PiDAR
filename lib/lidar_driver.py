@@ -1,26 +1,14 @@
 '''
-LD06 datasheet:
-https://storage.googleapis.com/mauser-public-images/prod_description_document/2021/315/8fcea7f5d479f4f4b71316d80b77ff45_096-6212_a.pdf
+LiDAR driver for LDRobot LD06 and STL27L (Waveshare)
 
+Sample Rates:
+LD06:    4500 samples/s  (375 batches/s x 12 samples/batch)
+STL27L: 21600 samples/s (1800 batches/s x 12 samples/batch)
 
-LD06:    375 batches/s x 12 samples/batch =  4500 samples/s
-STL27L: 1800 batches/s x 12 samples/batch = 21600 samples/s
+Speed Control on Raspberry Pi
+- RPi hardware PWM: https://pypi.org/project/rpi-hardware-pwm
+- PID tuning: https://simple-pid.readthedocs.io/en/
 
-
-PID tuning:
-1. Set all gains to zero. Start with the PID controller in its simplest form, which is a proportional controller. 
-This means setting the integral and derivative gains (Ki and Kd) to zero.
-
-2. Increase the proportional gain (Kp) until the response to a disturbance is steady oscillation. 
-Increase the Kp until the output oscillates and then reduce the Kp a bit until the oscillation stops. 
-This is known as the ultimate gain, Ku, at which the output of the control system oscillates with a constant amplitude.
-
-3. Implement integral action (Ki) to eliminate the steady state error. Start increasing the Ki gain from zero, 
-until any offset is corrected in sufficient time for the process. Too much Ki will lead to instability.
-
-4. Implement derivative action (Kd) to improve the settling time and overshoot. Increase Kd, if required, 
-until the loop is acceptably quick to reach its reference after a load disturbance. 
-However, too much Kd will make the system unstable as it will amplify the high-frequency measurement noise.
 '''
 
 import numpy as np
@@ -130,9 +118,10 @@ class Lidar:
                     if callback is not None:
                         callback()
                     
-                    print("speed:", round(self.speed, 2))
-                    if self.z_angle is not None:
-                        print("z_angle:", round(self.z_angle, 2))
+                    ## DEBUG
+                    # print("speed:", round(self.speed, 2))
+                    # if self.z_angle is not None:
+                    #     print("z_angle:", round(self.z_angle, 2))
                 
                     # SAVE DATA
                     if self.format is not None:

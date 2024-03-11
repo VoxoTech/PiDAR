@@ -1,36 +1,41 @@
-# PiDAR - a 360° 3D Panorama Scanner
+# PiDAR - DIY 360° 3D Panorama Scanner
 ## WORK IN PROGRESS!
 
-- LDRobot LD06 or STL27L LiDAR
-- HQ Camera with M12 Fisheye Lens 
-- Hugin Panorama stitching
+### Core Features:
+- **LiDAR**: custom serial driver for LDRobot **LD06**, **LD19** or **STL27L**
+    - CRC package integrity check
+    - PID-tuned PWM closed-loop control of rotational speed on Raspberry Pi
+    - 2D live visualization and export (numpy or CSV)
+
+- **Panorama**: 6K 360° spherical map
+    - stitched from fisheye photos using [**Hugin** Panorama photo stitcher](https://hugin.sourceforge.io/)
+    - constant camera exposure by reading EXIF data of automatic
+    - constant white balance by iterative optimization of color gains
+
+- **3D Scene**: assembly of 3D scenes from 2D planes based on angle and offsets
+    - sampling **vertex colors from panorama**
+    - Open3D visualization and export (PCD, PLY or [e57](https://github.com/davidcaron/pye57))
+    - aligning multiple scenes using **global registration** and **ICP fine-tuning**
+    - **Poisson Surface Meshing** (very slow on Pi4, recommended to run on PC)
+
+### Hardware Specs:
+
+- LDRobot LD06, LD19 or STL27L LiDAR
+- Raspberry Pi HQ Camera with ArduCam M12 Lens [(M25156H18, p.7)](https://www.arducam.com/doc/Arducam_M12_Lens_Kit_for_Pi_HQ_Camera.pdf)
 - Raspberry Pi 4
-- Nema17 stepper with A4988 driver
+- NEMA17 42-23 stepper with A4988 driver
+
+- Power Supply: 
+    - v1: 2x _18650_ Batteries (7.2V) with step-down converter
+    - v2: 10.000 mAh USB Powerbank with step-up converter
+
+- 3D printed: 
+    - custom housing with tripod mount ([v1 here](mechanical_design/v1))
+    - M12 to C-Mount lens adapter ([thingiverse.com](https://www.thingiverse.com/thing:4444398))
+    - NEMA17 planetary reduction gearbox ([printables.com](https://www.printables.com/de/model/782336-nema17-planetary-gearbox-fixed))
 
 <img src="mechanical_design/pidar_covershot.jpg" alt="PiDAR 360° Laserscanner" width="800"/>
 Version 1 (using 2x 18650 Batteries):
-
-## core features:
-- custom LDRobot LD06 / STL27L UART driver with PWM support
-- export cartesian 2D data (including luminance) as csv
-- 2D visualisation (matplotlib)
-- 3D visualisation (Open3D) based on Z-rotation
-- align multiple scans using global registration and ICP fine-tuning
-- export 3D pointcloud as [e57](https://github.com/davidcaron/pye57), pcd or ply
-- poisson surface meshing (very slow on Pi4, recommended to run on PC instead)
-
-inspired by:
-- [LIDAR_LD06_python_loder](https://github.com/henjin0/LIDAR_LD06_python_loder) and [Lidar_LD06_for_Arduino](https://github.com/henjin0/Lidar_LD06_for_Arduino) by Inoue Minoru ("[henjin0](https://github.com/henjin0)")
-- [ShaunPrice's](https://github.com/ShaunPrice/360-camera) StereoPi-supporting fork of [BrianBock's](https://github.com/BrianBock/360-camera) 360-camera script
-
-future reading:
-- [Doppler-ICP](https://github.com/aevainc/Doppler-ICP/blob/main/README.md)
-- [KISS-ICP](https://github.com/PRBonn/kiss-icp), [Lidar-Visualizer](https://github.com/PRBonn/lidar-visualizer)
-
-Open3D Demo Data for global registration, ICP, meshing etc.:
-- [BunnyMesh.ply](https://github.com/isl-org/open3d_downloads/releases/download/20220201-data/BunnyMesh.ply) from [20220201-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220201-data)
-- [DemoICPPointClouds.zip](https://github.com/isl-org/open3d_downloads/releases/download/20220301-data/DemoICPPointClouds.zip) from [20220301-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220301-data)
-
 
 ## wiring
 
@@ -95,11 +100,6 @@ reload daemon, enable and start service:
 check service if necessary:
 
     sudo systemctl status pidar.service
-
-
-## additional printed parts
-- [M12 to C-Mount lens adapter](https://www.thingiverse.com/thing:4444398)
-- [NEMA17 Planetary Gearbox](https://www.printables.com/de/model/782336-nema17-planetary-gearbox-fixed)
 
 
 ## Serial Protocol
@@ -173,31 +173,25 @@ install Hugin with enblend plugin
 
     sudo apt-get install hugin-tools enblend
 
-the stitching script is inspired by [StereoPi](https://medium.com/stereopi/stitching-360-panorama-with-raspberry-pi-cm3-stereopi-and-two-fisheye-cameras-step-by-step-guide-aeca3ff35871).
 
-
-## LDRobot LiDAR Units
+## LDRobot LiDAR Specs
 
 ![LD06 vs. STL27L](mechanical_design/lidar_comparison.jpg)
 
 LD06: 
-- sampling frequency 4500 Hz
+- sampling frequency: 4500 Hz
 - baudrate 230400
 - [Sales page](https://www.inno-maker.com/product/lidar-ld06/)
 - [mechanical Datasheet](https://www.inno-maker.com/wp-content/uploads/2020/11/LDROBOT_LD06_Datasheet.pdf)
 - [Protocol Description](https://storage.googleapis.com/mauser-public-images/prod_description_document/2021/315/8fcea7f5d479f4f4b71316d80b77ff45_096-6212_a.pdf)
-- another potentially interesting implementation: [pyLIDAR](https://github.com/Paradoxdruid/pyLIDAR)
 
 STL27L:
-- sampling frequency 21600 Hz
+- sampling frequency: 21600 Hz
 - baudrate 921600
 - [datasheet](https://github.com/May-DFRobot/DFRobot/blob/master/SEN0589_Datasheet.pdf)
 - [wiki](https://www.waveshare.com/wiki/DTOF_LIDAR_STL27L)
 - ROS2 driver [git](https://github.com/ldrobotSensorTeam/ldlidar_stl_ros2?tab=readme-ov-file#Instructions)
 
-## M12 Fisheye Lens for HQ Camera
-
-- ArduCam M12 Lens M25156H18 [(PDF page 7)](https://www.arducam.com/doc/Arducam_M12_Lens_Kit_for_Pi_HQ_Camera.pdf)
 
 
 ## Troubleshooting
@@ -235,3 +229,34 @@ there is no wheel for arm64. build requires libxerces:
 
     sudo apt install libxerces-c-dev
     pip install pye57
+
+
+#### Demo Data for global registration, ICP, meshing etc.:
+- [BunnyMesh.ply](https://github.com/isl-org/open3d_downloads/releases/download/20220201-data/BunnyMesh.ply) from [20220201-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220201-data)
+- [DemoICPPointClouds.zip](https://github.com/isl-org/open3d_downloads/releases/download/20220301-data/DemoICPPointClouds.zip) from [20220301-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220301-data)
+
+## further reading:
+
+inspirations
+- [LIDAR_LD06_python_loder](https://github.com/henjin0/LIDAR_LD06_python_loder) and [Lidar_LD06_for_Arduino](https://github.com/henjin0/Lidar_LD06_for_Arduino) by Inoue Minoru ("[henjin0](https://github.com/henjin0)")
+- [ShaunPrice's](https://github.com/ShaunPrice/360-camera) StereoPi-supporting fork of [BrianBock's](https://github.com/BrianBock/360-camera) 360-camera script
+- StereoPi Article on [Medium](https://medium.com/stereopi/stitching-360-panorama-with-raspberry-pi-cm3-stereopi-and-two-fisheye-cameras-step-by-step-guide-aeca3ff35871)
+
+another Lidar implementation in Python
+- [pyLIDAR](https://github.com/Paradoxdruid/pyLIDAR)
+
+ICP implementations:
+- Aeva [Doppler-ICP](https://github.com/aevainc/Doppler-ICP/blob/main/README.md)
+- Photogrammetry & Robotics Bonn [KISS-ICP](https://github.com/PRBonn/kiss-icp) and [Lidar-Visualizer](https://github.com/PRBonn/lidar-visualizer)
+
+PID tuning basics:
+- [An Introduction to Proportional-Integral-Derivative (PID) Controllers](https://engineering.purdue.edu/~zak/ECE_382-Fall_2018/IntroPID_16.pdf)
+- [PID Tuning via Classical Methods - Engineering LibreTexts](https://eng.libretexts.org/Bookshelves/Industrial_and_Systems_Engineering/Chemical_Process_Dynamics_and_Controls_%28Woolf%29/09%3A_Proportional-Integral-Derivative_%28PID%29_Control/9.03%3A_PID_Tuning_via_Classical_Methods)
+- [PID Tuning | How to Tune a PID Controller - RealPars](https://www.realpars.com/blog/pid-tuning)
+- [PLC PID Control Tuning: Practical Tips and Methods](https://controlforge.github.io/posts/PLC-PID-Control-Tuning-Practical-Tips-and-Methods/)
+
+PID advanced: Anti-Windup
+- [Anti-Windup Control Using PID Controller Block - MathWorks](https://www.mathworks.com/help/simulink/slref/anti-windup-control-using-a-pid-controller.html)
+- [Design and Modeling of Anti Wind Up PID Controllers](https://link.springer.com/chapter/10.1007/978-3-319-12883-2_1)
+- [PID Anti-windup Techniques - Erdos Miller](https://info.erdosmiller.com/blog/pid-anti-windup-techniques)
+- [Comparative Study of Anti-windup Techniques on Performance ... - Springer](https://link.springer.com/chapter/10.1007/978-981-15-4676-1_10)

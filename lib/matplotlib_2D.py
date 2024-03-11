@@ -5,6 +5,10 @@ import matplotlib.animation as animation
 
 class plot_2D:
     def __init__(self, pause=0.005, plotrange=1000):
+        self.x_list = np.array([])
+        self.y_list = np.array([])
+        self.color_list = np.array([])
+
         self.fig = plt.figure(figsize=(8, 8))
         self.fig.patch.set_facecolor('black')  # set the figure's background color to black
         self.ax = self.fig.add_subplot(111)
@@ -91,3 +95,4 @@ if __name__ == "__main__":
 
     # Keep the plot open until the user closes it
     plt.show()
+    plot.close()
