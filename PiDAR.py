@@ -81,11 +81,25 @@ if enable_camera:
 make_dir(DATA_DIR)
 
 # initialize stepper
-stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_ANGLE, microsteps=MICROSTEPS, gear_ratio=GEAR_RATIO)
+stepper = A4988(DIR_PIN, 
+                STEP_PIN, 
+                MS_PINS, 
+                delay=STEP_DELAY, 
+                step_angle=STEP_ANGLE, 
+                microsteps=MICROSTEPS, 
+                gear_ratio=GEAR_RATIO)
 
 # initialize lidar
 if enable_lidar:
-    lidar = LD06(port=PORT, pwm_dc = PWM_DC, visualization=VIS, offset=OFFSET,format=FORMAT, dtype=DTYPE, data_dir=DATA_DIR, out_len=OUT_LEN)
+    lidar = LD06(port=PORT, 
+                 pwm_dc=PWM_DC, 
+                 visualization=VIS, 
+                 offset=OFFSET,
+                 format=FORMAT, 
+                 dtype=DTYPE, 
+                 data_dir=DATA_DIR, 
+                 out_len=OUT_LEN, 
+                 platform='RaspberryPi')
     
     # callback function for lidar.read_loop()
     def move_steps_callback():

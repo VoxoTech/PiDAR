@@ -2,28 +2,50 @@
 LD06 datasheet:
 https://storage.googleapis.com/mauser-public-images/prod_description_document/2021/315/8fcea7f5d479f4f4b71316d80b77ff45_096-6212_a.pdf
 
-375 batches/s x 12 samples/batch = 4500 samples/s
+
+LD06:    375 batches/s x 12 samples/batch =  4500 samples/s
+STL27L: 1800 batches/s x 12 samples/batch = 21600 samples/s
+
+
+PID tuning:
+1. Set all gains to zero. Start with the PID controller in its simplest form, which is a proportional controller. 
+This means setting the integral and derivative gains (Ki and Kd) to zero.
+
+2. Increase the proportional gain (Kp) until the response to a disturbance is steady oscillation. 
+Increase the Kp until the output oscillates and then reduce the Kp a bit until the oscillation stops. 
+This is known as the ultimate gain, Ku, at which the output of the control system oscillates with a constant amplitude.
+
+3. Implement integral action (Ki) to eliminate the steady state error. Start increasing the Ki gain from zero, 
+until any offset is corrected in sufficient time for the process. Too much Ki will lead to instability.
+
+4. Implement derivative action (Kd) to improve the settling time and overshoot. Increase Kd, if required, 
+until the loop is acceptably quick to reach its reference after a load disturbance. 
+However, too much Kd will make the system unstable as it will amplify the high-frequency measurement noise.
 '''
 
 import numpy as np
 import serial
 import os
 import time
+from simple_pid import PID
 
 try:
     # running from project root
-    from lib.platform_utils import get_platform, init_serial, init_serial_MCU, init_pwm_Pi, init_pwm_MCU
+    from lib.crc_utils import check_CRC8, shift_bytes
+    from lib.platform_utils import init_serial, init_pwm_Pi  # init_serial_MCU, init_pwm_MCU
     from lib.file_utils import save_data
+    from lib.visualization import opengl_fallback
 except:
     # testing from this file
-    from platform_utils import get_platform, init_serial, init_serial_MCU, init_pwm_Pi, init_pwm_MCU
+    from crc_utils import check_CRC8, shift_bytes
+    from platform_utils import init_serial, init_pwm_Pi  # init_serial_MCU, init_pwm_MCU
     from file_utils import save_data
+    from visualization import opengl_fallback
 
 
-class LD06:
-    def __init__(self, port=None, pwm_channel=0, pwm_dc=0.4, baudrate=230400, offset=0, data_dir="data", out_len=40, format=None, visualization=None, dtype=np.float32):
-        self.platform           = get_platform()
-
+class Lidar:
+    def __init__(self, port=None, pwm_channel=0, speed=10, baudrate=None, sampling_rate=None, offset=0, data_dir="data", out_len=40, format=None, visualization=None, platform=None):
+        self.platform           = platform
         self.z_angle            = None  # gets updated externally by A4988 driver
 
         # constants
@@ -34,16 +56,20 @@ class LD06:
         self.deg2rad            = np.pi / 180
         self.offset             = offset
 
-        # serial
+        # Initialize PID controller
+        self.pid = PID(1, 0.01, 0.005)  # TODO: tune PID
+        self.pid.setpoint = speed
+
+        # SERIAL
         self.port               = port
-        if self.platform in ['Pico', 'Pico W', 'Metro M7']:
-            self.serial_connection  = init_serial_MCU(pin=self.port, baudrate=baudrate)
-        else:  # self.platform in ['Windows', 'Linux', 'RaspberryPi']:
-            self.serial_connection  = init_serial(port=self.port, baudrate=baudrate)
+        # if self.platform in ['Pico', 'Pico W', 'Metro M7']:
+        #     self.serial_connection  = init_serial_MCU(pin=self.port, baudrate=baudrate)
+        # else:  # self.platform in ['Windows', 'Linux', 'RaspberryPi']:
+        self.serial_connection  = init_serial(port=self.port, baudrate=baudrate)
         
         self.byte_array         = bytearray()
         self.flag_2c            = False
-        self.dtype              = dtype
+        self.dtype              = np.float32
 
         self.out_len            = out_len
         # preallocate batch:
@@ -63,24 +89,18 @@ class LD06:
         self.format             = format
         self.visualization      = visualization
 
-        self.pwm                = None
-        self.pwm_dc             = pwm_dc
-        self.pwm_frequency      = 30000  # 30 kHz
+        pwm_frequency           = 30000  # 30 kHz PWM frequency
+        if self.platform == 'RaspberryPi':
+            opengl_fallback(check=False)  # disable OpenGL
+            self.pwm            = init_pwm_Pi(pwm_channel, frequency=pwm_frequency)
+            self.pwm.start(40)            # 40% initial duty cycle
+        # elif self.platform in ['Pico', 'Pico W', 'Metro M7']:
+        #     pwm_pin             = "GP2"
+        #     self.pwm            = init_pwm_MCU(pwm_pin, frequency=pwm_frequency)
+        #     self.pwm.duty_cycle = int(0.4 * 65534)
+        else:
+            self.pwm = None
 
-        # platform-specific
-        if self.platform in ['Pico', 'Pico W', 'Metro M7']:
-            pwm_pin             = "GP2"
-            pwm                 = init_pwm_MCU(pwm_pin, frequency=self.pwm_frequency)
-            pwm.duty_cycle      = int(self.pwm_dc * 65534)
-        
-        elif self.platform == 'RaspberryPi':
-            pwm                 = init_pwm_Pi(pwm_channel, frequency=self.pwm_frequency)
-            pwm.start(int(self.pwm_dc * 100))
-            # pwm.change_duty_cycle(50)            
-
-            # disable OpenGL
-            os.environ['LIBGL_ALWAYS_SOFTWARE'] = '1'  # opengl_fallback(check=False)
-            
     
     def close(self):
         if self.pwm is not None:
@@ -104,17 +124,15 @@ class LD06:
                 print("Closing...")
             self.visualization.fig.canvas.mpl_connect('close_event', on_close)
 
-        # # TODO: hack; wait for other processes to calm down
-        # time.sleep(2)
-
         while self.serial_connection.is_open and (max_packages is None or loop_count <= max_packages):
             try:
                 if self.out_i == self.out_len:
                     if callback is not None:
                         callback()
                     
+                    print("speed:", round(self.speed, 2))
                     if self.z_angle is not None:
-                        print("speed:", round(self.speed, 2), "| z_angle:", round(self.z_angle, 2))
+                        print("z_angle:", round(self.z_angle, 2))
                 
                     # SAVE DATA
                     if self.format is not None:
@@ -134,6 +152,10 @@ class LD06:
                     self.out_i = 0
 
                 self.read()
+                
+                if self.pwm is not None:
+                    # Calculate new duty cycle and update PWM
+                    self.pwm.change_duty_cycle(self.pid(self.speed))
 
             except serial.SerialException:
                 print("SerialException")
@@ -158,11 +180,19 @@ class LD06:
 
                 # Error handling
                 if len(self.byte_array) != self.package_len:
-                    # print("[WARNING] Incomplete:", self.byte_array)
+                    print("[WARNING] Incomplete:", self.byte_array)
                     self.byte_array = bytearray()
                     self.flag_2c = False
                     continue
                 
+                # Check if the package is valid using check_CRC8
+                byte_array_shifted = shift_bytes(self.byte_array, shift=2)  # BUG: need to shift bytes because package ends with 0x54, 0x2c, but should start with them.
+                if not check_CRC8(byte_array_shifted):
+                    print("[WARNING] Invalid package:", byte_array_shifted)
+                    # If the package is not valid, reset byte_array and continue with the next iteration
+                    self.byte_array = bytearray()
+                    continue
+
                 self.decode(self.byte_array)  # updates speed, timestamp, angle_batch, distance_batch, luminance_batch
                 x_batch, y_batch = self.polar2cartesian(self.angle_batch, self.distance_batch, self.offset)
                 points_batch = np.column_stack((x_batch, y_batch, self.luminance_batch)).astype(self.dtype)
@@ -188,7 +218,7 @@ class LD06:
         FSA = float(int.from_bytes(byte_array[2:4][::-1], 'big')) / 100         # start angle in degrees
         LSA = float(int.from_bytes(byte_array[40:42][::-1], 'big')) / 100       # end angle in degrees
         self.timestamp = int.from_bytes(byte_array[42:44][::-1], 'big')         # timestamp in milliseconds < 30000
-        # CS = int.from_bytes(byte_array[44:45][::-1], 'big')                     # TODO: CRC Checksum                                
+        # CS = int.from_bytes(byte_array[44:45][::-1], 'big')                   # CRC Checksum                                
         
         angleStep = ((LSA - FSA) if LSA - FSA > 0 else (LSA + 360 - FSA)) / (self.dlength-1)
 
@@ -207,19 +237,25 @@ class LD06:
         return x_list, y_list
 
 
-class STL27L(LD06):
-    def __init__(self, port='COM6', pwm_channel=0, pwm_dc=0.4, offset=0, data_dir="data", out_len=200, format=None, visualization=None, dtype=np.float32):
-        # call the __init__ method of the parent class with the new baudrate and sampling rate
-        super().__init__(port, pwm_channel, pwm_dc, 921600, offset, data_dir, out_len, format, visualization, dtype)
-        self.sampling_rate = 21600  # new sampling rate for STL27L
+class LD06(Lidar):
+    def __init__(self, port="COM8", pwm_channel=0, speed=10, offset=0, data_dir="data", out_len=40, format=None, visualization=None, platform=None):
+        super().__init__(port, pwm_channel, speed, 230400, 4500, offset, data_dir, out_len, format, visualization, platform)
 
 
-def my_callback():
-    print("Callback function called!")
+class STL27L(Lidar):
+    def __init__(self, port="COM6", pwm_channel=0, speed=10, offset=0, data_dir="data", out_len=40, format=None, visualization=None, platform=None):
+        super().__init__(port, pwm_channel, speed, 921600, 21600, offset, data_dir, out_len, format, visualization, platform)
 
 
 if __name__ == "__main__":
     from file_utils import make_dir
+    from platform_utils import get_platform
+
+
+    def my_callback():
+        'DUMMY CALLBACK'
+        print(time.time())
+
 
     visualize = True
     DATA_DIR = "data/scan_02"
@@ -227,25 +263,27 @@ if __name__ == "__main__":
 
     if visualize:
         from matplotlib_2D import plot_2D
-        visualization = plot_2D(plotrange=1000)
+        visualization = plot_2D(plotrange=1500)
     else:
         import threading
         visualization = None
     
     # 4500 points per second / 12 points per batch / 10 revolutions per second = 37.5 batches per revolution
-    packages_per_revolution = 38
+    packages_per_revolution = 38  # round(sampling_rate / (12 * speed))
     hsteps = 50
     max_packages = hsteps * packages_per_revolution
 
+    platform = get_platform()
+
 
     lidar = LD06(port = 'COM8',  # '/dev/ttyS0',  
-                 pwm_dc = 0.4,
+                 speed = 10,
                  offset = np.pi / 2, 
                  format = 'npy',
-                 dtype = np.float64,
                  data_dir = DATA_DIR,
                  visualization = visualization,
-                 out_len = packages_per_revolution)
+                 out_len = packages_per_revolution,
+                 platform=platform)
 
     try:
         if lidar.serial_connection.is_open:
@@ -262,8 +300,5 @@ if __name__ == "__main__":
 
 
     # # STL27L
-    # lidar = STL27L(port = 'COM6',
-    #                format = 'npy',
-    #                data_dir = DATA_DIR,
-    #                visualization = visualization)
+    # lidar = STL27L(format='npy', data_dir=DATA_DIR, visualization=visualization, platform=platform)
     # lidar.read_loop()
