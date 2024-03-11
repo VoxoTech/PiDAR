@@ -27,7 +27,7 @@ enable_stitching = True                     # requires enable_camera
 
 # LiDAR DRIVER
 PORT = '/dev/ttyS0'                         # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyS0', 'Linux': '/dev/ttyUSB0'}  # dmesg | grep "tty"
-PWM_DC = 0.4                               # duty cycle: 0.23 = 6.5 Hz, 0.1 = 4 Hz
+SPEED = 10                                  # 10Hz
 OFFSET = np.pi / 2                          # = 90°
 FORMAT = 'npy'                              # 'npy' or 'csv' or None
 DTYPE = np.float64                          # np.float64 or np.float32
@@ -92,7 +92,7 @@ stepper = A4988(DIR_PIN,
 # initialize lidar
 if enable_lidar:
     lidar = LD06(port=PORT, 
-                 pwm_dc=PWM_DC, 
+                 speed=SPEED, 
                  visualization=VIS, 
                  offset=OFFSET,
                  format=FORMAT, 
