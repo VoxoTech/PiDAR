@@ -196,28 +196,6 @@ STL27L:
 
 ## Troubleshooting
 
-### VNC on Raspberry Pi bookworm
-use TigerVNC instead:
-https://wiki.ubuntuusers.de/Howto/TigerVNC/
-
-    sudo apt install tigervnc-standalone-server
-    sudo nano /etc/tigervnc/vncserver-config-mandatory
-
-    $localhost = "no";
-
-    sudo tigervncpasswd
-    sudo nano /etc/tigervnc/vncserver.users
-
-    1:=pi
-
-    sudo systemctl enable tigervncserver@:1.service  
-    sudo systemctl start tigervncserver@:1.service
-
-if necessary, define resolution and framerate:
-
-    echo "video=HDMI-A-1:1920x1080@60D" >> /boot/config.txt 
-
-
 ### poor performance of VS Code on Raspberry Pi
 disable hardware acceleration for VS Code ([source](https://code.visualstudio.com/docs/setup/raspberry-pi))
 
@@ -231,11 +209,7 @@ there is no wheel for arm64. build requires libxerces:
     pip install pye57
 
 
-#### Demo Data for global registration, ICP, meshing etc.:
-- [BunnyMesh.ply](https://github.com/isl-org/open3d_downloads/releases/download/20220201-data/BunnyMesh.ply) from [20220201-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220201-data)
-- [DemoICPPointClouds.zip](https://github.com/isl-org/open3d_downloads/releases/download/20220301-data/DemoICPPointClouds.zip) from [20220301-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220301-data)
-
-## further reading:
+## links and references:
 
 inspirations
 - [LIDAR_LD06_python_loder](https://github.com/henjin0/LIDAR_LD06_python_loder) and [Lidar_LD06_for_Arduino](https://github.com/henjin0/Lidar_LD06_for_Arduino) by Inoue Minoru ("[henjin0](https://github.com/henjin0)")
@@ -260,3 +234,7 @@ PID advanced: Anti-Windup
 - [Design and Modeling of Anti Wind Up PID Controllers](https://link.springer.com/chapter/10.1007/978-3-319-12883-2_1)
 - [PID Anti-windup Techniques - Erdos Miller](https://info.erdosmiller.com/blog/pid-anti-windup-techniques)
 - [Comparative Study of Anti-windup Techniques on Performance ... - Springer](https://link.springer.com/chapter/10.1007/978-981-15-4676-1_10)
+
+3D Demo Data for global registration, ICP, meshing etc.:
+- [BunnyMesh.ply](https://github.com/isl-org/open3d_downloads/releases/download/20220201-data/BunnyMesh.ply) from [20220201-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220201-data)
+- [DemoICPPointClouds.zip](https://github.com/isl-org/open3d_downloads/releases/download/20220301-data/DemoICPPointClouds.zip) from [20220301-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220301-data)
