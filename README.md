@@ -4,7 +4,7 @@
 ### Core Features:
 - **LiDAR**: custom serial driver for LDRobot **LD06**, **LD19** or **STL27L**
     - CRC package integrity check
-    - PID-tuned PWM closed-loop control of rotational speed on Raspberry Pi
+    - calibrated PWM control using curve fitting
     - 2D live visualization and export (numpy or CSV)
 
 - **Panorama**: 6K 360° spherical map
@@ -222,18 +222,6 @@ another Lidar implementation in Python
 ICP implementations:
 - Aeva [Doppler-ICP](https://github.com/aevainc/Doppler-ICP/blob/main/README.md)
 - Photogrammetry & Robotics Bonn [KISS-ICP](https://github.com/PRBonn/kiss-icp) and [Lidar-Visualizer](https://github.com/PRBonn/lidar-visualizer)
-
-PID tuning basics:
-- [An Introduction to Proportional-Integral-Derivative (PID) Controllers](https://engineering.purdue.edu/~zak/ECE_382-Fall_2018/IntroPID_16.pdf)
-- [PID Tuning via Classical Methods - Engineering LibreTexts](https://eng.libretexts.org/Bookshelves/Industrial_and_Systems_Engineering/Chemical_Process_Dynamics_and_Controls_%28Woolf%29/09%3A_Proportional-Integral-Derivative_%28PID%29_Control/9.03%3A_PID_Tuning_via_Classical_Methods)
-- [PID Tuning | How to Tune a PID Controller - RealPars](https://www.realpars.com/blog/pid-tuning)
-- [PLC PID Control Tuning: Practical Tips and Methods](https://controlforge.github.io/posts/PLC-PID-Control-Tuning-Practical-Tips-and-Methods/)
-
-PID advanced: Anti-Windup
-- [Anti-Windup Control Using PID Controller Block - MathWorks](https://www.mathworks.com/help/simulink/slref/anti-windup-control-using-a-pid-controller.html)
-- [Design and Modeling of Anti Wind Up PID Controllers](https://link.springer.com/chapter/10.1007/978-3-319-12883-2_1)
-- [PID Anti-windup Techniques - Erdos Miller](https://info.erdosmiller.com/blog/pid-anti-windup-techniques)
-- [Comparative Study of Anti-windup Techniques on Performance ... - Springer](https://link.springer.com/chapter/10.1007/978-981-15-4676-1_10)
 
 3D Demo Data for global registration, ICP, meshing etc.:
 - [BunnyMesh.ply](https://github.com/isl-org/open3d_downloads/releases/download/20220201-data/BunnyMesh.ply) from [20220201-data](https://github.com/isl-org/open3d_downloads/releases/tag/20220201-data)

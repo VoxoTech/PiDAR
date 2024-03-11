@@ -8,5 +8,4 @@ rpi-hardware-pwm
 RPi.GPIO
 pye57
 exifread
-simple-pid
 ```

@@ -7,15 +7,13 @@ STL27L: 21600 samples/s (1800 batches/s x 12 samples/batch)
 
 Speed Control on Raspberry Pi
 - RPi hardware PWM: https://pypi.org/project/rpi-hardware-pwm
-- PID tuning: https://simple-pid.readthedocs.io/en/
-
+- curve fitting using scipy.optimize.curve_fit
 '''
 
 import numpy as np
 import serial
 import os
 import time
-from simple_pid import PID
 
 try:
     # running from project root
@@ -33,6 +31,9 @@ except:
 
 class Lidar:
     def __init__(self, port=None, pwm_channel=0, speed=10, baudrate=None, sampling_rate=None, offset=0, data_dir="data", out_len=40, format=None, visualization=None, platform=None):
+        
+        self.verbose            = False
+
         self.platform           = platform
         self.z_angle            = None  # gets updated externally by A4988 driver
 
@@ -43,10 +44,6 @@ class Lidar:
         self.package_len        = 47  # 45 byte + 0x54 + 0x2c
         self.deg2rad            = np.pi / 180
         self.offset             = offset
-
-        # Initialize PID controller
-        self.pid = PID(1, 0.01, 0.005)  # TODO: tune PID
-        self.pid.setpoint = speed
 
         # SERIAL
         self.port               = port
@@ -81,11 +78,15 @@ class Lidar:
         if self.platform == 'RaspberryPi':
             opengl_fallback(check=False)  # disable OpenGL
             self.pwm            = init_pwm_Pi(pwm_channel, frequency=pwm_frequency)
-            self.pwm.start(40)            # 40% initial duty cycle
+            self.pwm_m          = 34.33718363
+            self.pwm_b          = -0.89974737
+            self.dc             = (speed - self.pwm_b) / self.pwm_m # calculate duty cycle from speed
+            self.pwm.start(self.dc * 100) 
+
         # elif self.platform in ['Pico', 'Pico W', 'Metro M7']:
         #     pwm_pin             = "GP2"
         #     self.pwm            = init_pwm_MCU(pwm_pin, frequency=pwm_frequency)
-        #     self.pwm.duty_cycle = int(0.4 * 65534)
+        #     self.pwm.duty_cycle = int(pwm_dc * 65534)
         else:
             self.pwm = None
 
@@ -118,10 +119,10 @@ class Lidar:
                     if callback is not None:
                         callback()
                     
-                    ## DEBUG
-                    # print("speed:", round(self.speed, 2))
-                    # if self.z_angle is not None:
-                    #     print("z_angle:", round(self.z_angle, 2))
+                    if self.verbose:
+                        print("speed:", round(self.speed, 2))
+                        if self.z_angle is not None:
+                            print("z_angle:", round(self.z_angle, 2))
                 
                     # SAVE DATA
                     if self.format is not None:
@@ -142,9 +143,6 @@ class Lidar:
 
                 self.read()
                 
-                if self.pwm is not None:
-                    # Calculate new duty cycle and update PWM
-                    self.pwm.change_duty_cycle(self.pid(self.speed))
 
             except serial.SerialException:
                 print("SerialException")
@@ -169,7 +167,10 @@ class Lidar:
 
                 # Error handling
                 if len(self.byte_array) != self.package_len:
-                    print("[WARNING] Incomplete:", self.byte_array)
+
+                    if self.verbose:
+                        print("[WARNING] Incomplete package:", self.byte_array)
+                    
                     self.byte_array = bytearray()
                     self.flag_2c = False
                     continue
@@ -177,7 +178,10 @@ class Lidar:
                 # Check if the package is valid using check_CRC8
                 byte_array_shifted = shift_bytes(self.byte_array, shift=2)  # BUG: need to shift bytes because package ends with 0x54, 0x2c, but should start with them.
                 if not check_CRC8(byte_array_shifted):
-                    print("[WARNING] Invalid package:", byte_array_shifted)
+
+                    if self.verbose:
+                        print("[WARNING] Invalid package:", byte_array_shifted)
+
                     # If the package is not valid, reset byte_array and continue with the next iteration
                     self.byte_array = bytearray()
                     continue
@@ -242,8 +246,7 @@ if __name__ == "__main__":
 
 
     def my_callback():
-        'DUMMY CALLBACK'
-        print(time.time())
+        print("[CALLBACK] speed:", round(lidar.speed, 2))
 
 
     visualize = True
@@ -257,15 +260,14 @@ if __name__ == "__main__":
         import threading
         visualization = None
     
-    # 4500 points per second / 12 points per batch / 10 revolutions per second = 37.5 batches per revolution
+    # LD06: 4500 points per second / 12 points per batch / 10 revolutions per second = 37.5 batches per revolution
     packages_per_revolution = 38  # round(sampling_rate / (12 * speed))
     hsteps = 50
     max_packages = hsteps * packages_per_revolution
 
     platform = get_platform()
 
-
-    lidar = LD06(port = 'COM8',  # '/dev/ttyS0',  
+    lidar = LD06(port = '/dev/ttyS0',  # 'COM8' 
                  speed = 10,
                  offset = np.pi / 2, 
                  format = 'npy',
@@ -278,8 +280,7 @@ if __name__ == "__main__":
         if lidar.serial_connection.is_open:
 
             if visualize:
-                lidar.read_loop()
-                # lidar.read_loop(callback=my_callback, max_packages=max_packages)
+                lidar.read_loop(callback=my_callback, max_packages=max_packages)
             else:
                 read_thread = threading.Thread(target=lidar.read_loop, kwargs={'callback': my_callback, 'max_packages': max_packages})
                 read_thread.start()

@@ -27,10 +27,8 @@ enable_stitching = True                     # requires enable_camera
 
 # LiDAR DRIVER
 PORT = '/dev/ttyS0'                         # {'Windows': 'COM10', 'RaspberryPi': '/dev/ttyS0', 'Linux': '/dev/ttyUSB0'}  # dmesg | grep "tty"
-SPEED = 10                                  # 10Hz
 OFFSET = np.pi / 2                          # = 90°
 FORMAT = 'npy'                              # 'npy' or 'csv' or None
-DTYPE = np.float64                          # np.float64 or np.float32
 DATA_DIR = "data/scan_02"
 VIS = None                                  # plot_2D() or None
 OUT_LEN = 40                                # visualize after every nth batch
@@ -46,6 +44,8 @@ TARGET_RES = 0.5                            # desired resolution in degrees
 STEP_DELAY = 0.0005                         # seconds between steps
 GEAR_RATIO = 3.7142857                      # planetary gear reduction ratio
 STEP_ANGLE = 1.8                            # degrees per full step (360 / 200)
+
+SPEED = 4500 * TARGET_RES / 360             # 6.25 Hz for 0.5° resolution
 
 steps = int(MS360 * TARGET_RES / 360)       # 16
 h_res = 360 * steps / MS360                 # 0.48464451
@@ -96,7 +96,6 @@ if enable_lidar:
                  visualization=VIS, 
                  offset=OFFSET,
                  format=FORMAT, 
-                 dtype=DTYPE, 
                  data_dir=DATA_DIR, 
                  out_len=OUT_LEN, 
                  platform='RaspberryPi')
