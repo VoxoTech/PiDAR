@@ -246,7 +246,8 @@ if __name__ == "__main__":
 
 
     def my_callback():
-        print("[CALLBACK] speed:", round(lidar.speed, 2))
+        # print("[CALLBACK] speed:", round(lidar.speed, 2))
+        pass
 
 
     visualize = True
@@ -270,7 +271,7 @@ if __name__ == "__main__":
     lidar = LD06(port = '/dev/ttyS0',  # 'COM8' 
                  speed = 10,
                  offset = np.pi / 2, 
-                 format = 'npy',
+                 format = None, # 'npy',
                  data_dir = DATA_DIR,
                  visualization = visualization,
                  out_len = packages_per_revolution,

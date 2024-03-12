@@ -10,12 +10,13 @@ from lib.visualization import opengl_fallback, visualize
 
 opengl_fallback()
 
-data_dir = "data/scan_01"
-output_path = "export/scan_01.ply"  # ply or e57
-pano = cv2.imread("export/pano_01.jpg")
+data_dir = "data/scan_02"
+pano = cv2.imread("export/pano_02.jpg")
 
+output_path = "export/scan_02.ply"  # ply or e57
 as_ascii = False
-scene_scale = 0.01   # 0.001 for mm -> m
+
+scene_scale = 0.001   # 0.001 for mm -> m
 pano_scale = 0.5     # image size 50 % 
 y_offset = -0.374    # -37.4 mm
 z_offset = 0.2       # offset in mm * -1
@@ -47,4 +48,4 @@ pcd.colors = o3d.utility.Vector3dVector(np.asarray(colors))
 
 # visualize while exporting
 export_pointcloud_threaded(pcd, output_path, ply_ascii=as_ascii)
-visualize([pcd], view="front", unlit=True)
+visualize([pcd], view="front", unlit=True, point_size=2)

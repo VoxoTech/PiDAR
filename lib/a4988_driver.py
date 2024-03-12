@@ -15,7 +15,7 @@ class A4988:
         GPIO.setwarnings(verbose) 
 
         GPIO.setmode(GPIO.BCM)
-        
+
         self.dir_pin = dir_pin
         GPIO.setup(self.dir_pin, GPIO.OUT)
 
@@ -25,6 +25,8 @@ class A4988:
         self.ms_pins = ms_pins
         for pin in self.ms_pins:
             GPIO.setup(pin, GPIO.OUT)
+        
+        self.current_steps = 0  # internal absolute angle
 
         self.step_angle = step_angle
         self.microsteps = microsteps
@@ -41,8 +43,6 @@ class A4988:
             for pin, state in zip(self.ms_pins, self.step_modes[self.microsteps]):
                 GPIO.output(pin, state)
 
-        self.current_angle = 0
-
     def set_direction(self, direction):
         GPIO.output(self.dir_pin, direction)
 
@@ -50,7 +50,7 @@ class A4988:
         return int((angle / self.step_angle) * self.microsteps * self.gear_ratio)
     
     def get_angle_for_steps(self, steps):
-        return (steps / (self.microsteps * self.gear_ratio)) * self.step_angle / 2  # TODO: HACK, /2 should not be there!
+        return (steps / (self.microsteps * self.gear_ratio)) * self.step_angle
 
     def step(self):
         GPIO.output(self.step_pin, True)
@@ -66,30 +66,28 @@ class A4988:
         for _ in range(steps):
             self.step()
         
-        # update current angle
-        self.current_angle += self.get_angle_for_steps(steps)   # TODO: use direction for +/- sign
+        # update current steps considering direction
+        self.current_steps += steps if not direction else -steps
 
     def move_angle(self, angle):
-        steps = self.get_steps_for_angle(angle)
-        self.move_steps(steps)
-    
-        # Update current angle
-        self.current_angle += angle
-
+        steps = self.get_steps_for_angle(abs(angle))
+        self.move_steps(steps if angle >= 0 else -steps)
         return steps
-    
+
     def move_to_angle(self, target_angle):
-        # Calculate the difference between the current and target angle
-        angle_difference = target_angle - self.current_angle
+        # Calculate the difference between the current and target steps
+        target_steps = self.get_steps_for_angle(target_angle)
+        steps_difference = target_steps - self.current_steps
 
         # Move the motor by the calculated difference
-        self.move_angle(angle_difference)
+        self.move_steps(steps_difference)
 
     def get_current_angle(self):
-        return self.current_angle
+        # Convert current steps to angle before returning
+        return (self.current_steps / (self.microsteps * self.gear_ratio)) * self.step_angle
     
     def close(self):
-        GPIO.setmode(GPIO.BCM)      # TODO: necessary to avoid "RuntimeError: Please set pin numbering mode" ?
+        #GPIO.setmode(GPIO.BCM)
         GPIO.cleanup(self.ms_pins)
         GPIO.cleanup(self.dir_pin)
         GPIO.cleanup(self.step_pin)
@@ -102,55 +100,49 @@ if __name__ == "__main__":
     STEP_PIN = 19
     MS_PINS = [5, 6, 13]
 
-    MICROSTEPS = 16                             # microstepping mode
-    MS_TABLE = {16: 11885, 8: 5942, 4: 2971}    # table of microsteps per revolution
-    MS360 = MS_TABLE[MICROSTEPS]                # microsteps per revolution
-
-    TARGET_RES = 1                            # desired resolution in degrees
+    TARGET_RES = 1                              # desired resolution in degrees
     STEP_DELAY = 0.0005
-    GEAR_RATIO = 3.7142857
+    GEAR_RATIO = 3.7142857                      # planetary gear reduction ratio
     STEPPER_RESOLUTION = 200
     STEP_ANGLE = 360 / STEPPER_RESOLUTION       # 1.8
+    MICROSTEPS = 16                             # microstepping mode
 
+    SAMPLING_RATE = 4500                        # samples/second
+    SCAN_ANGLE = 180                            # 180° CW or -180° CCW
+    scan_delay = 1 / (SAMPLING_RATE * TARGET_RES / 360)  # 0.16
+    
     # initialize stepper
     stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_ANGLE, microsteps=MICROSTEPS, gear_ratio=GEAR_RATIO)
 
-    steps = int(MS360 * TARGET_RES / 360)       # 16
-    h_res = 360 * steps / MS360                 # 0.48464451
-    scan_delay = 1 / (4500 * TARGET_RES / 360)  # 0.16
+    microsteps_per_revolution = STEPPER_RESOLUTION * MICROSTEPS * GEAR_RATIO
+    steps = int(microsteps_per_revolution * TARGET_RES / 360)       # 16
+    h_res = 360 * steps / microsteps_per_revolution                 # 0.48464451
+
 
     # # TEST: MOVE FULL 360°
-    # stepper.move_steps(MS360)
-    
+    # stepper.move_steps(microsteps_per_revolution)
+    # sleep(1)
+
     try:
-        # # 0-180° SCAN
-        # for z_angle in np.arange(0, 180, h_res):
-        #     stepper.move_steps(steps)
-        #     sleep(scan_delay)                   # duration of one lidar duration
-        # stepper.move_steps(steps)               # n+1 step
+        # 180° SCAN
+        print(f"starting angle: {round(stepper.get_current_angle(), 2)}°")
+        start_angle = 0 if SCAN_ANGLE > 0 else abs(SCAN_ANGLE)
+        for z_angle in np.linspace(start_angle, SCAN_ANGLE, int(abs(SCAN_ANGLE)/h_res), endpoint=False):
+            sleep(scan_delay) # duration of one lidar duration
+            stepper.move_steps(steps if SCAN_ANGLE > 0 else -steps)
 
-        # sleep(1)
+        print(f"reached {round(stepper.get_current_angle(), 2)}° (current steps: {stepper.current_steps}), returning ..")
+        sleep(1)
 
-        # 180-360° JUST SHOOTING PHOTOS
+        # returning back to Zero
+        stepper.move_to_angle(0)
+        sleep(1)
+
+        # 360° SHOOTING PHOTOS
         for i in range(4):
-            stepper.move_angle(10)
-            print(f"Photo {i+1} at {round(stepper.current_angle, 2)}°")
-            sleep(1)                            # delay for photo
-
-        ''' TODO ??
-        stepper.move_angle(45) :
-        Photo 1 at 67.49°
-        Photo 2 at 134.98°
-        Photo 3 at 202.47°
-        Photo 4 at 269.96°
-
-
-        stepper.move_angle(10) :
-        Photo 1 at 15.0°
-        Photo 2 at 30.0°
-        Photo 3 at 44.99°
-        Photo 4 at 59.99°
-        '''
+            print(f"Photo {i+1} at {round(stepper.get_current_angle(), 2)}°")
+            sleep(0.5) # delay for photo
+            stepper.move_angle(90)
 
     finally:
         stepper.close()

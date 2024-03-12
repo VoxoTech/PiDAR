@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO  # type: ignore
 import numpy as np
-import time
+from time import sleep
 
 from lib.platform_utils import allow_serial
 # from lib.matplotlib_2D import plot_2D
@@ -107,12 +107,11 @@ if enable_lidar:
 
     if not enable_camera:
         # wait for lidar to lock rotational speed
-        time.sleep(2)
+        sleep(2)
 
 
 # MAIN
 try:
-
     # 360° SHOOTING PHOTOS
     if enable_camera:
         for i in range(IMGCOUNT):
@@ -123,16 +122,10 @@ try:
 
             stepper.move_angle(360/IMGCOUNT)
 
-        # turn back to 0°
-        time.sleep(0.5)
-        stepper.move_angle(-360)
-
     # 180° SCAN
     if enable_lidar:
         lidar.read_loop(callback=move_steps_callback, max_packages=max_packages)  #  TODO: hsteps?
-
-        stepper.move_steps(steps)  # last step to complete 180°
-        stepper.move_angle(-180)    # return to 0°
+        stepper.move_to_angle(0)   # return to 0°
     
 
     # STITCHING PROCESS (NON-BLOCKING)
@@ -147,5 +140,5 @@ finally:
     stepper.close()
 
     # Relay Power off
-    GPIO.output(RELAY_PIN, 0)                          
+    GPIO.output(RELAY_PIN, 0)
     GPIO.cleanup(RELAY_PIN)
