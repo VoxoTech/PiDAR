@@ -59,8 +59,9 @@ if __name__ == "__main__":
     dir_pin = 26
     step_pin = 19
     ms_pins = [5, 6, 13]
+    gear_ratio = 1 + 38/14
 
-    driver = A4988(dir_pin, step_pin, ms_pins, delay=0.001, step_angle=1.8, microsteps=16, gear_ratio=3.7142857)
+    driver = A4988(dir_pin, step_pin, ms_pins, delay=0.001, step_angle=1.8, microsteps=16, gear_ratio=gear_ratio)
 
     while True:
         driver.move_angle(360)

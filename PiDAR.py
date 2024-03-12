@@ -42,7 +42,7 @@ MS_TABLE = {16: 11885, 8: 5942, 4: 2971}    # table of microsteps per revolution
 MS360 = MS_TABLE[MICROSTEPS]                # microsteps per revolution
 TARGET_RES = 0.5                            # desired resolution in degrees
 STEP_DELAY = 0.0005                         # seconds between steps
-GEAR_RATIO = 3.7142857                      # planetary gear reduction ratio
+GEAR_RATIO = 1 + 38/14                      # planetary gear reduction ratio
 STEP_ANGLE = 1.8                            # degrees per full step (360 / 200)
 
 SPEED = 4500 * TARGET_RES / 360             # 6.25 Hz for 0.5° resolution

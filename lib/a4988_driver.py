@@ -102,14 +102,15 @@ if __name__ == "__main__":
 
     TARGET_RES = 1                              # desired resolution in degrees
     STEP_DELAY = 0.0005
-    GEAR_RATIO = 3.7142857                      # planetary gear reduction ratio
+    GEAR_RATIO = 1 + 38/14                      # planetary gear reduction ratio: 3.7142857
     STEPPER_RESOLUTION = 200
     STEP_ANGLE = 360 / STEPPER_RESOLUTION       # 1.8
     MICROSTEPS = 16                             # microstepping mode
 
     SAMPLING_RATE = 4500                        # samples/second
     SCAN_ANGLE = 180                            # 180° CW or -180° CCW
-    scan_delay = 1 / (SAMPLING_RATE * TARGET_RES / 360)  # 0.16
+
+    scan_delay = 1 / (SAMPLING_RATE * TARGET_RES / 360)  # JUST FOR TESTING
     
     # initialize stepper
     stepper = A4988(DIR_PIN, STEP_PIN, MS_PINS, delay=STEP_DELAY, step_angle=STEP_ANGLE, microsteps=MICROSTEPS, gear_ratio=GEAR_RATIO)
