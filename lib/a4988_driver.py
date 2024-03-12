@@ -74,17 +74,29 @@ class A4988:
         self.move_steps(steps if angle >= 0 else -steps)
         return steps
 
-    def move_to_angle(self, target_angle):
-        # Calculate the difference between the current and target steps
-        target_steps = self.get_steps_for_angle(target_angle)
-        steps_difference = target_steps - self.current_steps
+    def move_to_angle(self, target_angle, mod=True):
+        if mod:
+            target_angle %= 360  # keep the target angle within the range of 0 to 359
+        current_angle = self.get_current_angle()
+        angle_difference = target_angle - current_angle
 
-        # Move the motor by the calculated difference
+        # If the angle difference is greater than 180, subtract 360 to get a negative angle
+        if angle_difference > 180:
+            angle_difference -= 360
+        elif angle_difference < -180:
+            angle_difference += 360
+
+        # Convert the angle difference to steps and move the motor
+        steps_difference = self.get_steps_for_angle(angle_difference)
         self.move_steps(steps_difference)
 
-    def get_current_angle(self):
+    def get_current_angle(self, mod=True):
         # Convert current steps to angle before returning
-        return (self.current_steps / (self.microsteps * self.gear_ratio)) * self.step_angle
+        current_angle = self.current_steps / (self.microsteps * self.gear_ratio) * self.step_angle
+
+        if mod:
+            current_angle %= 360
+        return current_angle
     
     def close(self):
         #GPIO.setmode(GPIO.BCM)
@@ -121,10 +133,23 @@ if __name__ == "__main__":
 
 
     # # TEST: MOVE FULL 360°
-    # stepper.move_steps(microsteps_per_revolution)
-    # sleep(1)
+    while True:
+        stepper.move_steps(microsteps_per_revolution)
+        sleep(0.1)
+        stepper.move_steps(-microsteps_per_revolution)
+        sleep(0.1)
 
     try:
+        # 360° SHOOTING PHOTOS
+        for i in range(4):
+            print(f"Photo {i+1} at {round(stepper.get_current_angle(), 2)}°")
+            sleep(0.5) # delay for photo
+            stepper.move_to_angle(90 * (i+1))
+        
+        stepper.move_to_angle(0)
+        stepper.move_steps(1)  # compensate negative value caused by rounding
+        sleep(1)
+
         # 180° SCAN
         print(f"starting angle: {round(stepper.get_current_angle(), 2)}°")
         start_angle = 0 if SCAN_ANGLE > 0 else abs(SCAN_ANGLE)
@@ -133,17 +158,7 @@ if __name__ == "__main__":
             stepper.move_steps(steps if SCAN_ANGLE > 0 else -steps)
 
         print(f"reached {round(stepper.get_current_angle(), 2)}° (current steps: {stepper.current_steps}), returning ..")
-        sleep(1)
-
-        # returning back to Zero
         stepper.move_to_angle(0)
-        sleep(1)
-
-        # 360° SHOOTING PHOTOS
-        for i in range(4):
-            print(f"Photo {i+1} at {round(stepper.get_current_angle(), 2)}°")
-            sleep(0.5) # delay for photo
-            stepper.move_angle(90)
-
+        
     finally:
         stepper.close()
